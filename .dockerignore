@@ -1,0 +1,41 @@
+# Version control
+.git
+.gitignore
+.gitattributes
+
+# Local development files
+.env
+.env.local
+
+# Node modules and build artifacts (built inside Docker)
+node_modules
+
+# Composer vendor directory (installed inside Docker)
+vendor
+
+# IDE files
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Laravel logs and cache (will be regenerated)
+storage/logs
+bootstrap/cache
+public/hot
+
+# Test files
+tests
+
+# Docker files (to avoid recursive COPY)
+docker-compose.yml
+docker-compose*.yml
+Dockerfile*
+
+# Documentation
+README.md
+*.md
