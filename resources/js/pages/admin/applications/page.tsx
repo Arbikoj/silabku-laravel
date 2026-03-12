@@ -104,19 +104,20 @@ export default function ApplicationSelectionPage() {
                                         <div className="text-xs text-muted-foreground">Kelas {amk.event_mata_kuliah.kelas.nama}</div>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        {amk.status !== 'pending' ? (
-                                            <Badge variant={amk.status === 'approved' ? 'default' : 'destructive'} className="capitalize">
+                                        {amk.status !== 'pending' && (
+                                            <Badge variant={amk.status === 'approved' ? 'default' : 'destructive'} className="capitalize mr-2">
                                                 {amk.status}
                                             </Badge>
-                                        ) : (
-                                            <>
-                                                <Button size="sm" variant="outline" className="h-8 px-2 text-green-600 border-green-200 hover:bg-green-50" onClick={() => handleReviewChoice(amk.id, 'approve')}>
-                                                    <Check className="h-4 w-4 mr-1" /> Approve
-                                                </Button>
-                                                <Button size="sm" variant="outline" className="h-8 px-2 text-destructive border-red-200 hover:bg-red-50" onClick={() => handleReviewChoice(amk.id, 'reject')}>
-                                                    <X className="h-4 w-4 mr-1" /> Reject
-                                                </Button>
-                                            </>
+                                        )}
+                                        {amk.status !== 'approved' && (
+                                            <Button size="sm" variant="outline" className="h-8 px-2 text-green-600 border-green-200 hover:bg-green-50" onClick={() => handleReviewChoice(amk.id, 'approve')}>
+                                                <Check className="h-4 w-4 mr-1" /> Approve
+                                            </Button>
+                                        )}
+                                        {amk.status !== 'rejected' && (
+                                            <Button size="sm" variant="outline" className="h-8 px-2 text-destructive border-red-200 hover:bg-red-50" onClick={() => handleReviewChoice(amk.id, 'reject')}>
+                                                <X className="h-4 w-4 mr-1" /> Reject
+                                            </Button>
                                         )}
                                     </div>
                                 </div>

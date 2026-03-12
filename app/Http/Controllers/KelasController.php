@@ -38,7 +38,12 @@ class KelasController extends Controller
     {
         $request->validate([
             'mata_kuliah_id' => 'required|exists:mata_kuliah,id',
-            'nama' => 'required|string|max:10|unique:kelas,nama',
+            'nama' => [
+                'required', 
+                'string', 
+                'max:10', 
+                \Illuminate\Validation\Rule::unique('kelas', 'nama')->where('mata_kuliah_id', $request->mata_kuliah_id)
+            ],
             'jumlah_mhs' => 'required|integer|min:0',
         ]);
 
@@ -56,7 +61,9 @@ class KelasController extends Controller
                 'required',
                 'string',
                 'max:10',
-                \Illuminate\Validation\Rule::unique('kelas')->ignore($kelas->id)
+                \Illuminate\Validation\Rule::unique('kelas', 'nama')
+                    ->where('mata_kuliah_id', $request->mata_kuliah_id)
+                    ->ignore($kelas->id)
             ],
             'jumlah_mhs' => 'required|integer|min:0',
         ]);

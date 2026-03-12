@@ -68,7 +68,15 @@ function KelasModal({ open, onClose, onSaved, initial, mataKuliahList }: {
                     </div>
                     <div className="grid gap-1">
                         <Label>Nama Kelas</Label>
-                        <Input value={form.nama} onChange={e => setForm(f => ({ ...f, nama: e.target.value }))} placeholder="RA / RB / RC" />
+                        <Select value={form.nama} onValueChange={v => setForm(f => ({ ...f, nama: v }))}>
+                            <SelectTrigger><SelectValue placeholder="Pilih Kelas" /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="R">R</SelectItem>
+                                <SelectItem value="RA">RA</SelectItem>
+                                <SelectItem value="RB">RB</SelectItem>
+                                <SelectItem value="RC">RC</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
                     <div className="grid gap-1">
                         <Label>Jumlah Mahasiswa</Label>

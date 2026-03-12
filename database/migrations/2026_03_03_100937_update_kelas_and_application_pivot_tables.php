@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('kelas', function (Blueprint $table) {
-            $table->unique('nama');
+            $table->unique(['mata_kuliah_id', 'nama']);
         });
 
         Schema::table('application_mata_kuliah', function (Blueprint $table) {
@@ -28,7 +28,7 @@ return new class extends Migration
         });
 
         Schema::table('kelas', function (Blueprint $table) {
-            $table->dropUnique(['nama']);
+            $table->dropUnique(['mata_kuliah_id', 'nama']);
         });
     }
 };
