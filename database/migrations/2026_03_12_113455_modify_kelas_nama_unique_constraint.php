@@ -11,13 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('kelas', function (Blueprint $table) {
-            try {
+        if (!Schema::hasIndex('kelas', 'kelas_mata_kuliah_id_nama_unique')) {
+            Schema::table('kelas', function (Blueprint $table) {
                 $table->unique(['mata_kuliah_id', 'nama'], 'kelas_mata_kuliah_id_nama_unique');
-            } catch (\Exception $e) {
-                // Ignore if it already exists
-            }
-        });
+            });
+        }
     }
 
     /**
@@ -25,8 +23,10 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('kelas', function (Blueprint $table) {
-            $table->dropUnique('kelas_mata_kuliah_id_nama_unique');
-        });
+        if (Schema::hasIndex('kelas', 'kelas_mata_kuliah_id_nama_unique')) {
+            Schema::table('kelas', function (Blueprint $table) {
+                $table->dropUnique('kelas_mata_kuliah_id_nama_unique');
+            });
+        }
     }
 };
