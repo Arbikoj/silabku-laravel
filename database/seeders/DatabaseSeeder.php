@@ -13,6 +13,7 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             RecruitmentSeeder::class,
+            DummyApplicantSeeder::class,
         ]);
     }
 }
