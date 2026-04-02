@@ -50,7 +50,7 @@ class EventController extends Controller
             ->map(function($amk) {
                 return [
                     'id' => $amk->id,
-                    'mata_kuliah' => $amk->eventMataKuliah?->mata_kuliah?->nama ?? 'N/A',
+                    'mata_kuliah' => $amk->eventMataKuliah?->mataKuliah?->nama ?? 'N/A',
                     'kelas' => $amk->eventMataKuliah?->kelas?->nama ?? 'N/A',
                     'nama_asisten' => $amk->application?->user?->profile?->nama_lengkap ?? $amk->application?->user?->name ?? 'Unknown',
                     'nim' => $amk->application?->user?->nim,
