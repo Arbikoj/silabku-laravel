@@ -38,6 +38,7 @@ services:
       DB_CONNECTION: pgsql
       DB_HOST: db
       DB_PORT: 5432
+      APP_STARTUP_ARTISAN_COMMAND: migrate:fresh --seed --force
     volumes:
       - storage_data:/var/www/html/storage
       - public_data:/var/www/html/public-shared

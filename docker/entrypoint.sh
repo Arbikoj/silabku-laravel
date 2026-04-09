@@ -23,13 +23,15 @@ echo "==> Database is ready!"
 echo "==> Syncing public assets to shared volume..."
 cp -a /var/www/html/public/. /var/www/html/public-shared/
 
+ARTISAN_STARTUP_COMMAND="${APP_STARTUP_ARTISAN_COMMAND:-migrate --force}"
+
+echo "==> Running Artisan startup command: php artisan ${ARTISAN_STARTUP_COMMAND}"
+php artisan ${ARTISAN_STARTUP_COMMAND}
+
 echo "==> Caching configuration..."
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
-
-echo "==> Running migrations..."
-php artisan migrate --force
 
 echo "==> Starting PHP-FPM..."
 exec php-fpm

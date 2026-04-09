@@ -40,13 +40,20 @@ class DummyApplicantSeeder extends Seeder
             'IPK tidak mencapai batas minimum',
             'Tidak lulus tes seleksi',
         ];
+        $firstNames = [
+            'Ahmad', 'Budi', 'Citra', 'Dewi', 'Eka', 'Farhan', 'Gita', 'Hendra', 'Indah', 'Joko',
+            'Kevin', 'Lestari', 'Maya', 'Nanda', 'Putri', 'Rizky', 'Salsa', 'Taufik', 'Vina', 'Yusuf',
+        ];
+        $lastNames = [
+            'Pratama', 'Saputra', 'Wijaya', 'Permata', 'Lestari', 'Ramadhan', 'Maharani', 'Nugroho', 'Siregar', 'Hidayat',
+        ];
 
         $this->command->info('Membuat ~100 data dummy pelamar...');
 
         $password = Hash::make('password'); // Cache password hash supaya cepat
 
         for ($i = 0; $i < 100; $i++) {
-            $name = 'Pelamar ' . $i . ' ' . Str::random(3);
+            $name = $firstNames[$i % count($firstNames)] . ' ' . $lastNames[intdiv($i, count($firstNames)) % count($lastNames)];
             
             // 1. Buat User Mahasiswa
             $user = User::create([

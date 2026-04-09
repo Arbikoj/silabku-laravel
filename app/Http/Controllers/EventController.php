@@ -36,8 +36,11 @@ class EventController extends Controller
     {
         $event->load([
             'semester',
-            'eventMataKuliah.mataKuliah',
-            'eventMataKuliah.kelas',
+            'eventMataKuliah' => fn($query) => $query
+                ->with(['mataKuliah', 'kelas'])
+                ->withCount([
+                    'applicationMataKuliah as approved_assistant_count' => fn($q) => $q->where('status', 'approved'),
+                ]),
         ]);
 
         // Ambil list asisten yang sudah disetujui untuk event ini
@@ -50,6 +53,8 @@ class EventController extends Controller
             ->map(function($amk) {
                 return [
                     'id' => $amk->id,
+                    'application_id' => $amk->application_id,
+                    'event_mata_kuliah_id' => $amk->event_mata_kuliah_id,
                     'mata_kuliah' => $amk->eventMataKuliah?->mataKuliah?->nama ?? 'N/A',
                     'kelas' => $amk->eventMataKuliah?->kelas?->nama ?? 'N/A',
                     'nama_asisten' => $amk->application?->user?->profile?->nama_lengkap ?? $amk->application?->user?->name ?? 'Unknown',
@@ -130,6 +135,13 @@ class EventController extends Controller
                     return $item['mata_kuliah_id'] == $existing->mata_kuliah_id && $item['kelas_id'] == $existing->kelas_id;
                 });
                 if (!$stillExists) {
+                    $approvedCount = $existing->applicationMataKuliah()->where('status', 'approved')->count();
+                    if ($approvedCount > 0) {
+                        return response()->json([
+                            'message' => "Mata kuliah {$existing->mataKuliah?->nama} kelas {$existing->kelas?->nama} tidak bisa dihapus karena masih memiliki asisten terpilih.",
+                        ], 422);
+                    }
+
                     $existing->delete();
                 }
             }

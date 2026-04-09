@@ -9,9 +9,60 @@ use App\Models\EventMataKuliah;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Throwable;
 
 class ApplicationController extends Controller
 {
+    private function syncApplicationStatus(Application $application): void
+    {
+        $statuses = $application->applicationMataKuliah()->pluck('status');
+
+        if ($statuses->contains('approved')) {
+            $status = 'approved';
+        } elseif ($statuses->isNotEmpty() && $statuses->every(fn($item) => $item === 'rejected')) {
+            $status = 'rejected';
+        } else {
+            $status = 'pending';
+        }
+
+        $application->update([
+            'status' => $status,
+            'reviewed_by' => Auth::id(),
+            'reviewed_at' => now(),
+        ]);
+    }
+
+    private function moveApprovedAssignmentForSwitch(
+        ApplicationMataKuliah $currentChoice,
+        int $destinationEventMataKuliahId,
+        string $note
+    ): void {
+        $existingDestinationChoice = ApplicationMataKuliah::where('application_id', $currentChoice->application_id)
+            ->where('event_mata_kuliah_id', $destinationEventMataKuliahId)
+            ->where('id', '!=', $currentChoice->id)
+            ->first();
+
+        if ($existingDestinationChoice) {
+            $existingDestinationChoice->update([
+                'status' => 'approved',
+                'catatan' => $note,
+            ]);
+
+            $currentChoice->update([
+                'status' => 'pending',
+                'catatan' => $note,
+            ]);
+
+            return;
+        }
+
+        $currentChoice->update([
+            'event_mata_kuliah_id' => $destinationEventMataKuliahId,
+            'status' => 'approved',
+            'catatan' => $note,
+        ]);
+    }
+
     // ─── Mahasiswa: lihat semua event terbuka ─────────────
     public function openEvents()
     {
@@ -161,11 +212,7 @@ class ApplicationController extends Controller
         ]);
 
         // Opsional: Update status aplikasi utama jadi 'processed' jika sudah ada keputusan
-        $choice->application->update([
-            'status' => 'approved', // minimal satu approved, aplikasi dianggap approved? 
-            'reviewed_by' => Auth::id(),
-            'reviewed_at' => now(),
-        ]);
+        $this->syncApplicationStatus($choice->application);
 
         return response()->json(['message' => 'Pilihan mata kuliah disetujui.', 'data' => $choice->load('eventMataKuliah.mataKuliah')]);
     }
@@ -182,12 +229,178 @@ class ApplicationController extends Controller
 
         // Jika semua choice rejected, baru aplikasi utama rejected?
         // Untuk simpelnya, kita tetap update reviewed_by di aplikasi utama
-        $choice->application->update([
-            'reviewed_by' => Auth::id(),
-            'reviewed_at' => now(),
-        ]);
+        $this->syncApplicationStatus($choice->application);
 
         return response()->json(['message' => 'Pilihan mata kuliah ditolak.', 'data' => $choice->load('eventMataKuliah.mataKuliah')]);
+    }
+
+    public function switchOptions(ApplicationMataKuliah $choice)
+    {
+        $choice->load([
+            'application.event',
+            'eventMataKuliah.mataKuliah',
+            'eventMataKuliah.kelas',
+        ]);
+
+        $options = ApplicationMataKuliah::with([
+            'application.user.profile',
+            'eventMataKuliah.mataKuliah',
+            'eventMataKuliah.kelas',
+        ])
+            ->where('id', '!=', $choice->id)
+            ->where('status', 'approved')
+            ->whereHas('application', fn($q) => $q->where('event_id', $choice->application->event_id))
+            ->orderByDesc('updated_at')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'event_mata_kuliah_id' => $item->event_mata_kuliah_id,
+                    'mata_kuliah' => $item->eventMataKuliah?->mataKuliah?->nama ?? 'N/A',
+                    'kelas' => $item->eventMataKuliah?->kelas?->nama ?? 'N/A',
+                    'nama_asisten' => $item->application?->user?->profile?->nama_lengkap ?? $item->application?->user?->name ?? 'Unknown',
+                    'nim' => $item->application?->user?->nim,
+                ];
+            });
+
+        return response()->json(['data' => $options]);
+    }
+
+    public function replacementCandidates(Request $request, ApplicationMataKuliah $choice)
+    {
+        $choice->load([
+            'application.event',
+            'eventMataKuliah.mataKuliah',
+            'eventMataKuliah.kelas',
+        ]);
+
+        $query = ApplicationMataKuliah::with([
+            'application.user.profile',
+            'eventMataKuliah.mataKuliah',
+            'eventMataKuliah.kelas',
+        ])
+            ->where('id', '!=', $choice->id)
+            ->where('event_mata_kuliah_id', $choice->event_mata_kuliah_id)
+            ->whereIn('status', ['pending', 'rejected'])
+            ->whereHas('application', fn($q) => $q->where('event_id', $choice->application->event_id));
+
+        if ($request->search) {
+            $search = $request->search;
+            $query->whereHas('application.user', function ($q) use ($search) {
+                $q->where('name', 'like', '%' . $search . '%')
+                    ->orWhere('nim', 'like', '%' . $search . '%')
+                    ->orWhereHas('profile', fn($profile) => $profile->where('nama_lengkap', 'like', '%' . $search . '%'));
+            });
+        }
+
+        $candidates = $query->orderByDesc('updated_at')->get()->map(function ($item) {
+            return [
+                'id' => $item->id,
+                'application_id' => $item->application_id,
+                'status' => $item->status,
+                'nama_asisten' => $item->application?->user?->profile?->nama_lengkap ?? $item->application?->user?->name ?? 'Unknown',
+                'nim' => $item->application?->user?->nim,
+                'ipk' => $item->application?->user?->profile?->nilai_ipk,
+                'mata_kuliah' => $item->eventMataKuliah?->mataKuliah?->nama ?? 'N/A',
+                'kelas' => $item->eventMataKuliah?->kelas?->nama ?? 'N/A',
+            ];
+        });
+
+        return response()->json(['data' => $candidates]);
+    }
+
+    public function switchChoice(Request $request, ApplicationMataKuliah $choice)
+    {
+        $request->validate([
+            'target_choice_id' => 'required|exists:application_mata_kuliah,id',
+        ]);
+
+        $choice->load('application.event', 'eventMataKuliah.mataKuliah', 'eventMataKuliah.kelas');
+        $target = ApplicationMataKuliah::with('application.event', 'eventMataKuliah.mataKuliah', 'eventMataKuliah.kelas')
+            ->findOrFail($request->target_choice_id);
+
+        if ($choice->status !== 'approved' || $target->status !== 'approved') {
+            return response()->json(['message' => 'Hanya penugasan approved yang dapat ditukar.'], 422);
+        }
+
+        if ($choice->application->event_id !== $target->application->event_id) {
+            return response()->json(['message' => 'Switch hanya bisa dilakukan dalam event yang sama.'], 422);
+        }
+
+        if ($choice->application_id === $target->application_id) {
+            return response()->json([
+                'message' => 'Switch tidak dapat dilakukan pada pilihan milik aplikasi yang sama.',
+            ], 422);
+        }
+
+        try {
+            DB::transaction(function () use ($choice, $target) {
+                $currentEventMataKuliahId = $choice->event_mata_kuliah_id;
+                $targetEventMataKuliahId = $target->event_mata_kuliah_id;
+                $timestamp = now()->format('Y-m-d H:i:s');
+
+                $choiceNote = 'Dipindahkan melalui switch admin pada ' . $timestamp;
+                $targetNote = 'Dipindahkan melalui switch admin pada ' . $timestamp;
+
+                $this->moveApprovedAssignmentForSwitch($choice, $targetEventMataKuliahId, $choiceNote);
+                $this->moveApprovedAssignmentForSwitch($target, $currentEventMataKuliahId, $targetNote);
+            });
+        } catch (Throwable $e) {
+            report($e);
+
+            return response()->json([
+                'message' => 'Switch gagal diproses. Silakan coba lagi atau cek apakah data pilihan asisten bentrok.',
+            ], 422);
+        }
+
+        return response()->json(['message' => 'Penugasan asisten berhasil ditukar.']);
+    }
+
+    public function replaceApprovedChoice(Request $request, ApplicationMataKuliah $choice)
+    {
+        $request->validate([
+            'replacement_choice_id' => 'required|exists:application_mata_kuliah,id',
+            'catatan' => 'nullable|string',
+        ]);
+
+        $choice->load('application.event', 'eventMataKuliah.mataKuliah', 'eventMataKuliah.kelas');
+        $replacement = ApplicationMataKuliah::with('application.event', 'eventMataKuliah.mataKuliah', 'eventMataKuliah.kelas')
+            ->findOrFail($request->replacement_choice_id);
+
+        if ($choice->status !== 'approved') {
+            return response()->json(['message' => 'Hanya penugasan approved yang dapat diganti.'], 422);
+        }
+
+        if ($choice->application->event_id !== $replacement->application->event_id) {
+            return response()->json(['message' => 'Pengganti harus berasal dari event yang sama.'], 422);
+        }
+
+        if ($choice->event_mata_kuliah_id !== $replacement->event_mata_kuliah_id) {
+            return response()->json(['message' => 'Pengganti harus berasal dari mata kuliah dan kelas yang sama.'], 422);
+        }
+
+        if ($replacement->status === 'approved') {
+            return response()->json(['message' => 'Kandidat pengganti tersebut sudah approved.'], 422);
+        }
+
+        DB::transaction(function () use ($choice, $replacement, $request) {
+            $note = $request->catatan ?: 'Pergantian asisten oleh admin pada ' . now()->format('Y-m-d H:i:s');
+
+            $choice->update([
+                'status' => 'rejected',
+                'catatan' => $note,
+            ]);
+
+            $replacement->update([
+                'status' => 'approved',
+                'catatan' => $note,
+            ]);
+
+            $this->syncApplicationStatus($choice->application);
+            $this->syncApplicationStatus($replacement->application);
+        });
+
+        return response()->json(['message' => 'Asisten berhasil diganti.']);
     }
 
     // ─── Admin: ganti asisten (update user_id di application) ─

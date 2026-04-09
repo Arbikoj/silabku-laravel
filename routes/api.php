@@ -46,6 +46,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/applications/{application}/reject', [ApplicationController::class, 'reject']);
     Route::post('/applications/choices/{choice}/approve', [ApplicationController::class, 'approveChoice']);
     Route::post('/applications/choices/{choice}/reject', [ApplicationController::class, 'rejectChoice']);
+    Route::get('/applications/choices/{choice}/switch-options', [ApplicationController::class, 'switchOptions']);
+    Route::get('/applications/choices/{choice}/replacement-candidates', [ApplicationController::class, 'replacementCandidates']);
+    Route::post('/applications/choices/{choice}/switch', [ApplicationController::class, 'switchChoice']);
+    Route::post('/applications/choices/{choice}/replace-approved', [ApplicationController::class, 'replaceApprovedChoice']);
     Route::post('/applications/{application}/replace', [ApplicationController::class, 'replaceApplicant']);
     Route::apiResource('/applications', ApplicationController::class)->only(['index', 'show']);
 
