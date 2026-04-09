@@ -1,157 +1,192 @@
 import AppLayout from '@/layouts/app-layout';
 import api from '@/lib/api';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/react';
-import { Check, X, Search, User, Info } from 'lucide-react';
-import { useEffect, useState, useCallback } from 'react';
-import { Button } from '@/components/ui/button';
+import { Check, ChevronDown, ChevronRight, Search, Users, X } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Seleksi Asisten', href: '/seleksi' }];
 
-interface Semester { id: number; nama: string; }
-interface Event { id: number; nama: string; tipe: string; semester_id: number; is_open: boolean; tanggal_buka: string; tanggal_tutup: string; deskripsi: string; semester: Semester; }
-
-interface Application {
+interface Semester {
     id: number;
-    status: string;
-    catatan: string;
-    user: { name: string; nim: string; profile: { nama_lengkap: string; no_wa: string; nilai_ipk: number; foto: string } };
-    event: { nama: string };
-    application_mata_kuliah: { 
-        id: number;
-        status: string;
-        catatan: string;
-        event_mata_kuliah: { mata_kuliah: { nama: string }; kelas: { nama: string } } 
-    }[];
+    nama: string;
 }
 
+interface Event {
+    id: number;
+    nama: string;
+    tipe: string;
+    semester_id: number;
+    is_open: boolean;
+    tanggal_buka: string;
+    tanggal_tutup: string;
+    deskripsi: string;
+    semester: Semester;
+}
+
+interface OtherChoice {
+    id: number;
+    status: string;
+    mata_kuliah: string;
+    kelas: string;
+}
+
+interface Candidate {
+    choice_id: number;
+    application_id: number;
+    status: string;
+    catatan: string | null;
+    is_quota_full: boolean;
+    nama_asisten: string;
+    nim: string;
+    ipk?: number;
+    no_wa?: string;
+    other_choices: OtherChoice[];
+}
+
+interface SelectionGroup {
+    event_mata_kuliah_id: number;
+    event: {
+        id: number;
+        nama: string;
+        semester: string;
+    };
+    mata_kuliah: string;
+    kelas: string;
+    kuota_asisten: number;
+    approved_count: number;
+    remaining_slots: number;
+    is_quota_full: boolean;
+    candidates: Candidate[];
+}
+
+const statusBadgeVariant = (status: string) => {
+    if (status === 'approved') return 'default';
+    if (status === 'rejected') return 'destructive';
+    return 'secondary';
+};
+
 export default function ApplicationSelectionPage() {
-    const [data, setData] = useState<Application[]>([]);
     const [events, setEvents] = useState<Event[]>([]);
+    const [groups, setGroups] = useState<SelectionGroup[]>([]);
     const [loading, setLoading] = useState(true);
-    const [filters, setFilters] = useState({ event_id: '', status: '', search: '' });
-    const [page, setPage] = useState(1);
-    const [total, setTotal] = useState(0);
+    const [filters, setFilters] = useState({ event_id: '0', status: '0', search: '' });
+    const [processingChoiceId, setProcessingChoiceId] = useState<number | null>(null);
+    const [expandedCards, setExpandedCards] = useState<Record<number, boolean>>({});
 
-    const [selectedApp, setSelectedApp] = useState<Application | null>(null);
-    const [reviewModal, setReviewModal] = useState<{ open: boolean; type: 'approve' | 'reject'; notes: string }>({ open: false, type: 'approve', notes: '' });
-
-    const fetch = useCallback(() => {
+    const fetchBoard = useCallback(() => {
         setLoading(true);
-        api.get('/applications', { params: { ...filters, page, per_page: 20 } })
-            .then(r => { setData(r.data.data); setTotal(r.data.meta.total); })
+        api.get('/applications/selection-board', {
+            params: {
+                event_id: filters.event_id !== '0' ? filters.event_id : undefined,
+                status: filters.status !== '0' ? filters.status : undefined,
+                search: filters.search || undefined,
+            },
+        })
+            .then((r) => setGroups(r.data.data))
             .finally(() => setLoading(false));
-    }, [filters, page]);
+    }, [filters]);
 
     useEffect(() => {
-        fetch();
-        api.get('/events').then(r => setEvents(r.data.data));
-    }, [fetch]);
+        fetchBoard();
+    }, [fetchBoard]);
+
+    useEffect(() => {
+        api.get('/events').then((r) => setEvents(r.data.data));
+    }, []);
+
+    useEffect(() => {
+        setExpandedCards((prev) => {
+            const nextState: Record<number, boolean> = {};
+
+            groups.forEach((group) => {
+                nextState[group.event_mata_kuliah_id] = prev[group.event_mata_kuliah_id] ?? false;
+            });
+
+            return nextState;
+        });
+    }, [groups]);
 
     const handleReviewChoice = async (choiceId: number, type: 'approve' | 'reject') => {
+        setProcessingChoiceId(choiceId);
+
         try {
-            const url = `/applications/choices/${choiceId}/${type}`;
-            await api.post(url, { catatan: reviewModal.notes });
-            toast.success(`Pilihan ${type === 'approve' ? 'disetujui' : 'ditolak'}`);
-            
-            // Refresh local data to show updated status in modal
-            if (selectedApp) {
-                const updatedMK = selectedApp.application_mata_kuliah.map(amk => 
-                    amk.id === choiceId ? { ...amk, status: type === 'approve' ? 'approved' : 'rejected' } : amk
-                );
-                setSelectedApp({ ...selectedApp, application_mata_kuliah: updatedMK });
-            }
-            
-            fetch();
-        } catch {
-            toast.error('Gagal memproses');
+            await api.post(`/applications/choices/${choiceId}/${type}`, { catatan: null });
+            toast.success(type === 'approve' ? 'Asisten berhasil di-ACC' : 'Pilihan berhasil ditolak');
+            fetchBoard();
+        } catch (error: any) {
+            toast.error(error?.response?.data?.message || 'Gagal memproses pilihan');
+        } finally {
+            setProcessingChoiceId(null);
         }
     };
+
+    const summary = useMemo(() => {
+        const totalCandidates = groups.reduce((total, group) => total + group.candidates.length, 0);
+        const totalApproved = groups.reduce((total, group) => total + group.approved_count, 0);
+        const totalQuota = groups.reduce((total, group) => total + group.kuota_asisten, 0);
+
+        return {
+            totalClasses: groups.length,
+            totalCandidates,
+            totalApproved,
+            totalQuota,
+        };
+    }, [groups]);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Seleksi Asisten" />
 
-            <Dialog open={!!(selectedApp && reviewModal.open)} onOpenChange={o => { if(!o) setSelectedApp(null); setReviewModal(m => ({ ...m, open: o })); }}>
-                <DialogContent className="max-w-2xl">
-                    <DialogHeader>
-                        <DialogTitle>Detail & Seleksi Aplikasi</DialogTitle>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4 text-sm">
-                        <div className="flex items-center gap-4 bg-muted/30 p-4 rounded-xl">
-                            <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center border text-primary">
-                                <User className="h-6 w-6" />
-                            </div>
-                            <div>
-                                <div className="text-lg font-bold">{selectedApp?.user.profile?.nama_lengkap || selectedApp?.user.name}</div>
-                                <div className="text-muted-foreground">NIM: {selectedApp?.user.nim} | IPK: {selectedApp?.user.profile?.nilai_ipk || '-'}</div>
-                            </div>
+            <div className="p-5">
+                <div className="mb-6 rounded-2xl border bg-card p-5 shadow-sm">
+                    <div className="mb-4 flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+                        <div>
+                            <h1 className="text-2xl font-bold">Seleksi Asisten per Kelas</h1>
+                            <p className="text-sm text-muted-foreground">
+                                Pilih kelas terlebih dahulu, lalu ACC kandidat langsung di dalam daftar kelas tersebut.
+                            </p>
                         </div>
-
-                        <div className="space-y-3">
-                            <Label className="text-xs font-bold uppercase text-muted-foreground">Pilihan Mata Kuliah & Kelas</Label>
-                            {selectedApp?.application_mata_kuliah.map(amk => (
-                                <div key={amk.id} className="flex items-center justify-between border p-3 rounded-lg bg-card">
-                                    <div>
-                                        <div className="font-semibold">{amk.event_mata_kuliah.mata_kuliah.nama}</div>
-                                        <div className="text-xs text-muted-foreground">Kelas {amk.event_mata_kuliah.kelas.nama}</div>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        {amk.status !== 'pending' && (
-                                            <Badge variant={amk.status === 'approved' ? 'default' : 'destructive'} className="capitalize mr-2">
-                                                {amk.status}
-                                            </Badge>
-                                        )}
-                                        {amk.status !== 'approved' && (
-                                            <Button size="sm" variant="outline" className="h-8 px-2 text-green-600 border-green-200 hover:bg-green-50" onClick={() => handleReviewChoice(amk.id, 'approve')}>
-                                                <Check className="h-4 w-4 mr-1" /> Approve
-                                            </Button>
-                                        )}
-                                        {amk.status !== 'rejected' && (
-                                            <Button size="sm" variant="outline" className="h-8 px-2 text-destructive border-red-200 hover:bg-red-50" onClick={() => handleReviewChoice(amk.id, 'reject')}>
-                                                <X className="h-4 w-4 mr-1" /> Reject
-                                            </Button>
-                                        )}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-
-                        <div className="grid gap-1 border-t pt-3">
-                            <Label className="text-xs font-bold uppercase text-muted-foreground">Catatan Global / Instruksi</Label>
-                            <Textarea value={reviewModal.notes} onChange={e => setReviewModal(m => ({ ...m, notes: e.target.value }))} placeholder="Berikan catatan tambahan jika perlu..." />
+                        <div className="flex flex-wrap gap-2 text-xs">
+                            <Badge variant="outline">{summary.totalClasses} kelas</Badge>
+                            <Badge variant="outline">{summary.totalCandidates} pendaftar</Badge>
+                            <Badge variant="outline">
+                                Terisi {summary.totalApproved}/{summary.totalQuota}
+                            </Badge>
                         </div>
                     </div>
-                    <DialogFooter>
-                        <Button variant="ghost" onClick={() => setReviewModal(m => ({ ...m, open: false }))}>Tutup</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
 
-            <div className="p-5">
-                <div className="flex flex-col md:flex-row gap-4 items-end mb-6">
-                    <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-3 w-full">
+                    <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
                         <div className="grid gap-1">
                             <Label className="text-xs">Event</Label>
-                            <Select value={filters.event_id} onValueChange={v => setFilters(f => ({ ...f, event_id: v }))}>
-                                <SelectTrigger><SelectValue placeholder="Semua Event" /></SelectTrigger>
+                            <Select value={filters.event_id} onValueChange={(value) => setFilters((prev) => ({ ...prev, event_id: value }))}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Semua Event" />
+                                </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="0">Semua Event</SelectItem>
-                                    {events.map(e => <SelectItem key={e.id} value={e.id.toString()}>{e.nama}</SelectItem>)}
+                                    {events.map((event) => (
+                                        <SelectItem key={event.id} value={event.id.toString()}>
+                                            {event.nama}
+                                        </SelectItem>
+                                    ))}
                                 </SelectContent>
                             </Select>
                         </div>
+
                         <div className="grid gap-1">
-                            <Label className="text-xs">Status</Label>
-                            <Select value={filters.status} onValueChange={v => setFilters(f => ({ ...f, status: v }))}>
-                                <SelectTrigger><SelectValue placeholder="Semua Status" /></SelectTrigger>
+                            <Label className="text-xs">Status Kandidat</Label>
+                            <Select value={filters.status} onValueChange={(value) => setFilters((prev) => ({ ...prev, status: value }))}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Semua Status" />
+                                </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="0">Semua Status</SelectItem>
                                     <SelectItem value="pending">Pending</SelectItem>
@@ -160,79 +195,161 @@ export default function ApplicationSelectionPage() {
                                 </SelectContent>
                             </Select>
                         </div>
+
                         <div className="grid gap-1">
-                            <Label className="text-xs">Cari Mahasiswa</Label>
+                            <Label className="text-xs">Cari Kandidat</Label>
                             <div className="relative">
-                                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                                <Input placeholder="Nama / NIM..." className="pl-9" value={filters.search} onChange={e => setFilters(f => ({ ...f, search: e.target.value }))} />
+                                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                    value={filters.search}
+                                    onChange={(e) => setFilters((prev) => ({ ...prev, search: e.target.value }))}
+                                    placeholder="Nama atau NIM..."
+                                    className="pl-9"
+                                />
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div className="rounded-xl border bg-card overflow-hidden">
-                    <table className="w-full text-sm">
-                        <thead className="bg-muted/50">
-                            <tr>
-                                <th className="px-4 py-3 text-left">Mahasiswa</th>
-                                <th className="px-4 py-3 text-left">Event</th>
-                                <th className="px-4 py-3 text-left">Pilihan Matkul</th>
-                                <th className="px-4 py-3 text-center">Status</th>
-                                <th className="px-4 py-3 text-right">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y">
-                            {loading ? (
-                                <tr><td colSpan={5} className="py-20 text-center text-muted-foreground">Memuat data...</td></tr>
-                            ) : data.map(app => (
-                                <tr key={app.id} className="hover:bg-muted/20 transition-colors">
-                                    <td className="px-4 py-3">
-                                        <div className="flex items-center gap-3">
-                                            <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center border text-primary">
-                                                <User className="h-5 w-5" />
-                                            </div>
-                                            <div>
-                                                <div className="font-semibold">{app.user.profile?.nama_lengkap || app.user.name}</div>
-                                                <div className="text-xs text-muted-foreground">NIM: {app.user.nim} | IPK: {app.user.profile?.nilai_ipk || '-'}</div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-4 py-3 text-muted-foreground">{app.event.nama}</td>
-                                    <td className="px-4 py-3">
-                                        <div className="flex flex-wrap gap-1">
-                                            {app.application_mata_kuliah.map((amk, i) => (
-                                                <Badge key={i} variant="outline" className="text-[10px] py-0">
-                                                    {amk.event_mata_kuliah.mata_kuliah.nama} ({amk.event_mata_kuliah.kelas.nama})
-                                                </Badge>
-                                            ))}
-                                        </div>
-                                    </td>
-                                    <td className="px-4 py-3 text-center">
-                                        <Badge variant={app.status === 'approved' ? 'default' : app.status === 'rejected' ? 'destructive' : 'secondary'} className="capitalize">
-                                            {app.status}
-                                        </Badge>
-                                    </td>
-                                    <td className="px-4 py-3 text-right">
-                                        <Button size="sm" variant="outline" className="h-8 px-3" onClick={() => { setSelectedApp(app); setReviewModal({ open: true, type: 'approve', notes: app.catatan || '' }); }}>
-                                            <Info className="h-4 w-4 mr-1" /> Kelola / Detail
-                                        </Button>
-                                    </td>
-                                </tr>
-                            ))}
-                            {!loading && data.length === 0 && (
-                                <tr><td colSpan={5} className="py-20 text-center text-muted-foreground">Tidak ada pendaftaran yang ditemukan.</td></tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-
-                <div className="flex items-center justify-between mt-4 text-xs text-muted-foreground">
-                    <div>Menampilkan {data.length} dari {total} pendaftar</div>
-                    <div className="flex gap-2">
-                        <Button size="sm" variant="outline" className="h-8" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>Sebelumnya</Button>
-                        <Button size="sm" variant="outline" className="h-8" disabled={data.length < 20} onClick={() => setPage(p => p + 1)}>Selanjutnya</Button>
+                {loading ? (
+                    <div className="rounded-2xl border border-dashed py-20 text-center text-sm text-muted-foreground">
+                        Memuat data seleksi...
                     </div>
-                </div>
+                ) : groups.length === 0 ? (
+                    <div className="rounded-2xl border border-dashed py-20 text-center text-sm text-muted-foreground">
+                        Tidak ada kelas atau kandidat yang cocok dengan filter.
+                    </div>
+                ) : (
+                    <div className="space-y-5">
+                        {groups.map((group) => (
+                            <Collapsible
+                                key={group.event_mata_kuliah_id}
+                                open={expandedCards[group.event_mata_kuliah_id] ?? false}
+                                onOpenChange={(open) =>
+                                    setExpandedCards((prev) => ({ ...prev, [group.event_mata_kuliah_id]: open }))
+                                }
+                            >
+                                <section className="overflow-hidden rounded-2xl border bg-card shadow-sm">
+                                    <CollapsibleTrigger asChild>
+                                        <button
+                                            type="button"
+                                            className="flex w-full items-center gap-3 px-5 py-4 text-left transition-colors hover:bg-muted/20"
+                                        >
+                                            <div className="min-w-0 flex-1">
+                                                <h2 className="truncate text-lg font-semibold">
+                                                    {group.mata_kuliah} - Kelas {group.kelas}
+                                                </h2>
+                                            </div>
+
+                                            <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 text-xs">
+                                                <Badge variant="secondary">Kuota {group.kuota_asisten}</Badge>
+                                                <Badge variant="secondary">Terisi {group.approved_count}</Badge>
+                                                <Badge variant={group.remaining_slots > 0 ? 'outline' : 'destructive'}>
+                                                    Sisa {group.remaining_slots}
+                                                </Badge>
+                                            </div>
+
+                                            <div className="shrink-0 text-muted-foreground">
+                                                {expandedCards[group.event_mata_kuliah_id] ? (
+                                                    <ChevronDown className="h-5 w-5" />
+                                                ) : (
+                                                    <ChevronRight className="h-5 w-5" />
+                                                )}
+                                            </div>
+                                        </button>
+                                    </CollapsibleTrigger>
+
+                                    <CollapsibleContent>
+                                        <div className="border-t bg-muted/10 px-5 py-3 text-sm text-muted-foreground">
+                                            <span className="font-medium text-foreground">{group.event.nama}</span> • {group.event.semester}
+                                        </div>
+
+                                        {group.candidates.length === 0 ? (
+                                            <div className="px-5 py-10 text-center text-sm text-muted-foreground">Belum ada pendaftar pada kelas ini.</div>
+                                        ) : (
+                                            <div className="max-h-[420px] overflow-y-auto">
+                                                <div className="divide-y">
+                                                    {group.candidates.map((candidate) => (
+                                                        <div
+                                                            key={candidate.choice_id}
+                                                            className="flex flex-col gap-4 px-5 py-4 md:flex-row md:items-center md:justify-between"
+                                                        >
+                                                            <div className="min-w-0 flex-1">
+                                                                <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-3">
+                                                                    <div className="font-semibold">{candidate.nama_asisten}</div>
+                                                                    <Badge variant={statusBadgeVariant(candidate.status)} className="capitalize">
+                                                                        {candidate.status}
+                                                                    </Badge>
+                                                                </div>
+
+                                                                <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                                                                    <span>NIM: {candidate.nim || '-'}</span>
+                                                                    <span>IPK: {candidate.ipk ?? '-'}</span>
+                                                                </div>
+
+                                                                {candidate.other_choices.length > 0 && (
+                                                                    <div className="mt-3">
+                                                                        <div className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                                                                            Pilihan lain
+                                                                        </div>
+                                                                        <div className="flex flex-wrap gap-2">
+                                                                            {candidate.other_choices.map((choice) => (
+                                                                                <Badge key={choice.id} variant="outline" className="text-[11px]">
+                                                                                    {choice.mata_kuliah} ({choice.kelas}) - {choice.status}
+                                                                                </Badge>
+                                                                            ))}
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+
+                                                                {candidate.catatan && (
+                                                                    <div className="mt-3 rounded-lg border bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
+                                                                        Catatan: {candidate.catatan}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+
+                                                            <div className="flex shrink-0 flex-wrap items-center gap-2">
+                                                                {candidate.status !== 'approved' && (
+                                                                    <Button
+                                                                        size="sm"
+                                                                        className="h-9"
+                                                                        onClick={() => handleReviewChoice(candidate.choice_id, 'approve')}
+                                                                        disabled={processingChoiceId === candidate.choice_id || group.is_quota_full}
+                                                                    >
+                                                                        <Check className="mr-1 h-4 w-4" /> Approve
+                                                                    </Button>
+                                                                )}
+                                                                {candidate.status !== 'rejected' && (
+                                                                    <Button
+                                                                        size="sm"
+                                                                        variant="outline"
+                                                                        className="h-9 border-red-200 text-destructive hover:bg-red-50"
+                                                                        onClick={() => handleReviewChoice(candidate.choice_id, 'reject')}
+                                                                        disabled={processingChoiceId === candidate.choice_id}
+                                                                    >
+                                                                        <X className="mr-1 h-4 w-4" /> Reject
+                                                                    </Button>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </CollapsibleContent>
+                                </section>
+                            </Collapsible>
+                        ))}
+                    </div>
+                )}
+
+                {!loading && groups.length > 0 && (
+                    <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
+                        <Users className="h-4 w-4" />
+                        Daftar disusun per mata kuliah dan kelas agar ACC mengikuti kuota dengan lebih mudah.
+                    </div>
+                )}
             </div>
         </AppLayout>
     );

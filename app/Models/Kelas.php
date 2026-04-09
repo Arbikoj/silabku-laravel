@@ -9,7 +9,7 @@ class Kelas extends Model
     protected $fillable = ['mata_kuliah_id', 'nama', 'jumlah_mhs'];
 
     // Accessor: kuota asisten = ceil(jumlah_mhs / 8)
-    public function getKuotaAsisteenAttribute(): int
+    public function getKuotaAsistenAttribute(): int
     {
         return (int) ceil($this->jumlah_mhs / 8);
     }

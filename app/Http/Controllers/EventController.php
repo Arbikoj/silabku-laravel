@@ -43,6 +43,13 @@ class EventController extends Controller
                 ]),
         ]);
 
+        $event->eventMataKuliah->each(function ($item) {
+            $quota = (int) ceil(((int) $item->kelas?->jumlah_mhs) / 8);
+            $item->setAttribute('kuota_asisten', $quota);
+            $item->setAttribute('remaining_quota', max($quota - (int) $item->approved_assistant_count, 0));
+            $item->setAttribute('is_quota_full', (int) $item->approved_assistant_count >= $quota);
+        });
+
         // Ambil list asisten yang sudah disetujui untuk event ini
         $approvedAssistants = \App\Models\ApplicationMataKuliah::whereHas('application', function($q) use ($event) {
                 $q->where('event_id', $event->id);

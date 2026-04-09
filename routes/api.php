@@ -41,6 +41,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // ── Applications ──────────────────────────────────────────
     Route::get('/applications/open-events', [ApplicationController::class, 'openEvents']);
     Route::get('/applications/my', [ApplicationController::class, 'myApplications']);
+    Route::get('/applications/selection-board', [ApplicationController::class, 'selectionBoard']);
     Route::post('/applications/apply', [ApplicationController::class, 'apply']);
     Route::post('/applications/{application}/approve', [ApplicationController::class, 'approve']);
     Route::post('/applications/{application}/reject', [ApplicationController::class, 'reject']);

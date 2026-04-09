@@ -7,12 +7,41 @@ use App\Models\ApplicationMataKuliah;
 use App\Models\Event;
 use App\Models\EventMataKuliah;
 use Illuminate\Http\Request;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
 class ApplicationController extends Controller
 {
+    private function calculateAssistantQuota(?int $studentCount): int
+    {
+        return (int) ceil(((int) $studentCount) / 8);
+    }
+
+    private function getApprovedChoiceCount(int $eventMataKuliahId, ?int $exceptChoiceId = null): int
+    {
+        return ApplicationMataKuliah::where('event_mata_kuliah_id', $eventMataKuliahId)
+            ->where('status', 'approved')
+            ->when($exceptChoiceId, fn($query) => $query->where('id', '!=', $exceptChoiceId))
+            ->count();
+    }
+
+    private function buildChoiceQuotaData(ApplicationMataKuliah $choice, ?int $exceptChoiceId = null): array
+    {
+        $choice->loadMissing('eventMataKuliah.kelas');
+
+        $quota = $this->calculateAssistantQuota($choice->eventMataKuliah?->kelas?->jumlah_mhs);
+        $approvedCount = $this->getApprovedChoiceCount($choice->event_mata_kuliah_id, $exceptChoiceId);
+
+        return [
+            'kuota_asisten' => $quota,
+            'approved_count' => $approvedCount,
+            'remaining_slots' => max($quota - $approvedCount, 0),
+            'is_quota_full' => $approvedCount >= $quota,
+        ];
+    }
+
     private function syncApplicationStatus(Application $application): void
     {
         $statuses = $application->applicationMataKuliah()->pluck('status');
@@ -74,10 +103,10 @@ class ApplicationController extends Controller
         // Kuota info dan jumlah approved per event_mata_kuliah
         $events->each(function ($event) {
             $event->eventMataKuliah->each(function ($emk) {
-                $emk->kuota_asisten = (int) ceil($emk->kelas->jumlah_mhs / 8);
-                $emk->approved_count = ApplicationMataKuliah::where('event_mata_kuliah_id', $emk->id)
-                    ->whereHas('application', fn($q) => $q->where('status', 'approved'))
-                    ->count();
+                $emk->kuota_asisten = $this->calculateAssistantQuota($emk->kelas->jumlah_mhs);
+                $emk->approved_count = $this->getApprovedChoiceCount($emk->id);
+                $emk->remaining_slots = max($emk->kuota_asisten - $emk->approved_count, 0);
+                $emk->is_quota_full = $emk->approved_count >= $emk->kuota_asisten;
             });
         });
 
@@ -170,6 +199,116 @@ class ApplicationController extends Controller
         return response()->json($apps);
     }
 
+    public function selectionBoard(Request $request)
+    {
+        $query = ApplicationMataKuliah::with([
+            'application.user.profile',
+            'application.event.semester',
+            'application.applicationMataKuliah.eventMataKuliah.mataKuliah',
+            'application.applicationMataKuliah.eventMataKuliah.kelas',
+            'eventMataKuliah.mataKuliah',
+            'eventMataKuliah.kelas',
+        ]);
+
+        if ($request->event_id) {
+            $query->whereHas('application', fn($q) => $q->where('event_id', $request->event_id));
+        }
+
+        if ($request->status) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->search) {
+            $search = $request->search;
+            $query->whereHas('application.user', function ($q) use ($search) {
+                $q->where('name', 'like', '%' . $search . '%')
+                    ->orWhere('nim', 'like', '%' . $search . '%')
+                    ->orWhereHas('profile', fn($profile) => $profile->where('nama_lengkap', 'like', '%' . $search . '%'));
+            });
+        }
+
+        $choices = $query->get();
+
+        $groups = $choices
+            ->groupBy('event_mata_kuliah_id')
+            ->map(function ($items) {
+                $firstChoice = $items->first();
+                $quotaData = $this->buildChoiceQuotaData($firstChoice);
+                $event = $firstChoice->application?->event;
+                $eventMataKuliah = $firstChoice->eventMataKuliah;
+
+                $candidates = $items
+                    ->map(function (ApplicationMataKuliah $choice) use ($quotaData) {
+                        $allChoices = $choice->application?->applicationMataKuliah ?? collect();
+
+                        $otherChoices = $allChoices
+                            ->where('id', '!=', $choice->id)
+                            ->map(function (ApplicationMataKuliah $item) {
+                                return [
+                                    'id' => $item->id,
+                                    'status' => $item->status,
+                                    'mata_kuliah' => $item->eventMataKuliah?->mataKuliah?->nama ?? 'N/A',
+                                    'kelas' => $item->eventMataKuliah?->kelas?->nama ?? 'N/A',
+                                ];
+                            })
+                            ->values();
+
+                        return [
+                            'choice_id' => $choice->id,
+                            'application_id' => $choice->application_id,
+                            'status' => $choice->status,
+                            'catatan' => $choice->catatan,
+                            'is_quota_full' => $quotaData['is_quota_full'],
+                            'nama_asisten' => $choice->application?->user?->profile?->nama_lengkap ?? $choice->application?->user?->name ?? 'Unknown',
+                            'nim' => $choice->application?->user?->nim,
+                            'ipk' => $choice->application?->user?->profile?->nilai_ipk,
+                            'no_wa' => $choice->application?->user?->profile?->no_wa,
+                            'other_choices' => $otherChoices,
+                        ];
+                    })
+                    ->sortBy([
+                        fn(array $item) => match ($item['status']) {
+                            'approved' => 0,
+                            'pending' => 1,
+                            'rejected' => 2,
+                            default => 3,
+                        },
+                        ['nama_asisten', 'asc'],
+                    ])
+                    ->values();
+
+                return [
+                    'event_mata_kuliah_id' => $firstChoice->event_mata_kuliah_id,
+                    'event' => [
+                        'id' => $event?->id,
+                        'nama' => $event?->nama,
+                        'semester' => $event?->semester?->nama,
+                    ],
+                    'mata_kuliah' => $eventMataKuliah?->mataKuliah?->nama ?? 'N/A',
+                    'kelas' => $eventMataKuliah?->kelas?->nama ?? 'N/A',
+                    'kuota_asisten' => $quotaData['kuota_asisten'],
+                    'approved_count' => $quotaData['approved_count'],
+                    'remaining_slots' => $quotaData['remaining_slots'],
+                    'is_quota_full' => $quotaData['is_quota_full'],
+                    'candidates' => $candidates,
+                ];
+            })
+            ->sortBy([
+                fn(array $item) => strtolower($item['event']['nama'] ?? ''),
+                fn(array $item) => strtolower($item['mata_kuliah']),
+                fn(array $item) => strtolower($item['kelas']),
+            ])
+            ->values();
+
+        return response()->json([
+            'data' => $groups,
+            'meta' => [
+                'total_groups' => $groups->count(),
+                'total_choices' => $choices->count(),
+            ],
+        ]);
+    }
+
     // ─── Admin/Dosen: list semua aplikasi ────────────────
     public function index(Request $request)
     {
@@ -195,8 +334,24 @@ class ApplicationController extends Controller
         $perPage = $request->per_page ?? 20;
         $data = $query->orderByDesc('created_at')->paginate($perPage);
 
+        $items = collect($data->items())->map(function (Application $application) {
+            $application->applicationMataKuliah->each(function (ApplicationMataKuliah $choice) {
+                $quotaData = $this->buildChoiceQuotaData(
+                    $choice,
+                    $choice->status === 'approved' ? $choice->id : null
+                );
+
+                $choice->setAttribute('kuota_asisten', $quotaData['kuota_asisten']);
+                $choice->setAttribute('approved_count', $quotaData['approved_count']);
+                $choice->setAttribute('remaining_slots', $quotaData['remaining_slots']);
+                $choice->setAttribute('is_quota_full', $quotaData['is_quota_full']);
+            });
+
+            return $application;
+        });
+
         return response()->json([
-            'data' => $data->items(),
+            'data' => $items,
             'meta' => ['total' => $data->total()],
         ]);
     }
@@ -206,15 +361,46 @@ class ApplicationController extends Controller
     {
         $request->validate(['catatan' => 'nullable|string']);
 
-        $choice->update([
-            'status' => 'approved',
-            'catatan' => $request->catatan,
+        try {
+            DB::transaction(function () use ($choice, $request) {
+                $choice->load('application', 'eventMataKuliah.kelas', 'eventMataKuliah.mataKuliah');
+
+                if ($choice->status !== 'approved') {
+                    $quotaData = $this->buildChoiceQuotaData($choice);
+
+                    if ($quotaData['is_quota_full']) {
+                        $mataKuliah = $choice->eventMataKuliah?->mataKuliah?->nama ?? 'mata kuliah ini';
+                        $kelas = $choice->eventMataKuliah?->kelas?->nama ?? '-';
+
+                        throw new HttpResponseException(response()->json([
+                            'message' => "Kuota asisten untuk {$mataKuliah} kelas {$kelas} sudah penuh ({$quotaData['approved_count']}/{$quotaData['kuota_asisten']}).",
+                            'quota' => $quotaData,
+                        ], 422));
+                    }
+                }
+
+                $choice->update([
+                    'status' => 'approved',
+                    'catatan' => $request->catatan,
+                ]);
+
+                $this->syncApplicationStatus($choice->application);
+            });
+        } catch (HttpResponseException $e) {
+            throw $e;
+        } catch (Throwable $e) {
+            report($e);
+
+            return response()->json(['message' => 'Gagal menyetujui pilihan mata kuliah.'], 500);
+        }
+
+        $choice->refresh()->load('eventMataKuliah.mataKuliah', 'eventMataKuliah.kelas');
+        $quotaData = $this->buildChoiceQuotaData($choice, $choice->id);
+
+        return response()->json([
+            'message' => 'Pilihan mata kuliah disetujui.',
+            'data' => array_merge($choice->toArray(), $quotaData),
         ]);
-
-        // Opsional: Update status aplikasi utama jadi 'processed' jika sudah ada keputusan
-        $this->syncApplicationStatus($choice->application);
-
-        return response()->json(['message' => 'Pilihan mata kuliah disetujui.', 'data' => $choice->load('eventMataKuliah.mataKuliah')]);
     }
 
     // ─── Admin/Dosen: reject spesifik matkul di aplikasi ────
