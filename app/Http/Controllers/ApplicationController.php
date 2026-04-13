@@ -613,6 +613,68 @@ class ApplicationController extends Controller
         return response()->json(['message' => 'Asisten berhasil diganti.', 'data' => $application->load('user.profile')]);
     }
 
+    // ─── Database asisten unik (grouped by user) ──────────
+    public function databaseUnique(Request $request)
+    {
+        // Query user_id unik yang pernah approved
+        $query = \App\Models\User::whereHas('applications.applicationMataKuliah', fn($q) => $q->where('status', 'approved'))
+            ->with(['profile']);
+
+        if ($request->search) {
+            $search = $request->search;
+            $query->where(fn($q) => $q
+                ->where('name', 'like', '%' . $search . '%')
+                ->orWhere('nim', 'like', '%' . $search . '%')
+                ->orWhereHas('profile', fn($p) => $p->where('nama_lengkap', 'like', '%' . $search . '%'))
+            );
+        }
+
+        $perPage = $request->per_page ?? 20;
+        $paginated = $query->orderBy('name')->paginate($perPage);
+
+        // Untuk setiap user, ambil semua approved assignment-nya
+        $items = collect($paginated->items())->map(function ($user) {
+            $approvedChoices = \App\Models\ApplicationMataKuliah::with([
+                    'application.event.semester',
+                    'eventMataKuliah.mataKuliah',
+                    'eventMataKuliah.kelas',
+                ])
+                ->where('status', 'approved')
+                ->whereHas('application', fn($q) => $q->where('user_id', $user->id))
+                ->get()
+                ->map(fn($amk) => [
+                    'choice_id'   => $amk->id,
+                    'event_id'    => $amk->application?->event?->id,
+                    'event_nama'  => $amk->application?->event?->nama ?? 'N/A',
+                    'event_tipe'  => $amk->application?->event?->tipe ?? '-',
+                    'semester'    => $amk->application?->event?->semester?->nama ?? '-',
+                    'mata_kuliah' => $amk->eventMataKuliah?->mataKuliah?->nama ?? 'N/A',
+                    'kelas'       => $amk->eventMataKuliah?->kelas?->nama ?? 'N/A',
+                ]);
+
+            return [
+                'user_id'      => $user->id,
+                'nim'          => $user->nim,
+                'nama'         => $user->profile?->nama_lengkap ?? $user->name,
+                'nilai_ipk'    => $user->profile?->nilai_ipk,
+                'foto'         => $user->profile?->foto,
+                'total_event'  => $approvedChoices->pluck('event_id')->unique()->count(),
+                'assignments'  => $approvedChoices->values(),
+            ];
+        });
+
+        return response()->json([
+            'data' => $items,
+            'meta' => [
+                'total'        => $paginated->total(),
+                'current_page' => $paginated->currentPage(),
+                'last_page'    => $paginated->lastPage(),
+                'from'         => $paginated->firstItem(),
+                'to'           => $paginated->lastItem(),
+            ],
+        ]);
+    }
+
     // ─── Database semua asisten approved ─────────────────
     public function database(Request $request)
     {
