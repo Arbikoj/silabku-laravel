@@ -131,9 +131,13 @@ class ApplicationController extends Controller
 
         $existingApplication = Application::where('user_id', $user->id)->where('event_id', $event->id)->first();
 
-        // Validasi syarat nilai minimum
         $profile = $user->profile;
-        $ipk = $profile ? (float) $profile->nilai_ipk : 0;
+
+        if (!$profile || !$profile->transkrip_gd_id || !$profile->ktm_gd_id || !$profile->norek || !$profile->nama_rek || !$profile->bank || !$profile->no_wa || !$profile->nilai_ipk) {
+            return response()->json(['message' => 'Harap lengkapi Profil Anda (KTM, Transkrip, Info Pembayaran, Nomor WhatsApp, dan IPK) terlebih dahulu sebelum mendaftar event.'], 422);
+        }
+
+        $ipk = (float) $profile->nilai_ipk;
         $emkIds = $request->event_mata_kuliah_ids;
         $emks = EventMataKuliah::with('mataKuliah')->whereIn('id', $emkIds)->get();
 

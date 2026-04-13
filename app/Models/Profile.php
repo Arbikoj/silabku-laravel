@@ -14,6 +14,8 @@ class Profile extends Model
         'nama_rek',
         'bank',
         'foto',
+        'transkrip_gd_id',
+        'ktm_gd_id',
         'nilai_ipk',
     ];
 

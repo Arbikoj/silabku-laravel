@@ -15,6 +15,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // ── Profil Asisten (mahasiswa) ───────────────────────────
     Route::get('/profil', fn() => Inertia::render('oprec/profil/page'))->name('profil.index');
+    Route::get('/profil/transkrip', [\App\Http\Controllers\ProfileController::class, 'transkrip'])->name('profil.transkrip');
+    Route::get('/profil/ktm', [\App\Http\Controllers\ProfileController::class, 'ktm'])->name('profil.ktm');
 
     // ── Oprec routes (mahasiswa = role:user) ─────────────────
     Route::prefix('oprec')->name('oprec.')->group(function () {
