@@ -18,7 +18,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { DataTable } from '@/components/tanstack-table';
 import type { ColumnDef, PaginationState, SortingState } from '@tanstack/react-table';
 
-const breadcrumbs: BreadcrumbItem[] = [{ title: 'Database Asisten', href: '/database-asisten' }];
+const breadcrumbs: BreadcrumbItem[] = [{ title: 'Database Asisten', href: '/database' }];
 
 interface Assignment {
     choice_id: number;

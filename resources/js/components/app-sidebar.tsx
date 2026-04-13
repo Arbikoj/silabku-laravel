@@ -78,8 +78,8 @@ export function AppSidebar() {
             icon: Database,
             isActive: true,
             items: [
-                { title: 'Semua Asisten', url: '/database-asisten' },
-                { title: 'Per Event', url: '/database-asisten/per-event' },
+                { title: 'Semua Asisten', url: '/database' },
+                { title: 'Per Event', url: '/database/event' },
             ],
         },
     ];

@@ -38,9 +38,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('seleksi.index');
 
     // ── Database Asisten ─────────────────────────────────────
-    Route::prefix('database-asisten')->name('database.')->group(function () {
+    Route::prefix('database')->name('database.')->group(function () {
         Route::get('/', fn() => Inertia::render('database/asisten/page'))->name('asisten');
-        Route::get('/per-event', fn() => Inertia::render('database/per-event/page'))->name('per-event');
+        Route::get('/event', fn() => Inertia::render('database/per-event/page'))->name('per-event');
     });
 });
 
