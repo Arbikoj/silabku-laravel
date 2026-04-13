@@ -33,15 +33,14 @@ services:
     env_file:
       - .env
     environment:
-      APP_ENV: production
-      APP_DEBUG: "false"
+      APP_ENV: local
+      APP_DEBUG: "true"
       DB_CONNECTION: pgsql
       DB_HOST: db
       DB_PORT: 5432
       APP_STARTUP_ARTISAN_COMMAND: migrate:fresh --seed --force
     volumes:
-      - storage_data:/var/www/html/storage
-      - public_data:/var/www/html/public-shared
+      - ./:/var/www/html
     depends_on:
       db:
         condition: service_healthy
@@ -57,20 +56,29 @@ services:
       - "80:80"
     volumes:
       - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
-      - public_data:/var/www/html/public:ro
-      - storage_data:/var/www/html/storage:ro
+      - ./:/var/www/html:ro
     depends_on:
       - app
+    networks:
+      - silabku_net
+
+  # ─── Vite Dev Server ────────────────────────────────────────────────────────
+  vite:
+    image: node:22-alpine
+    container_name: silabku_vite
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - ./:/var/www/html
+    command: sh -c "npm install && npm run dev"
+    ports:
+      - "5173:5173"
     networks:
       - silabku_net
 
 # ─── Volumes ────────────────────────────────────────────────────────────────
 volumes:
   pgdata:
-    driver: local
-  storage_data:
-    driver: local
-  public_data:
     driver: local
 
 # ─── Networks ────────────────────────────────────────────────────────────────
