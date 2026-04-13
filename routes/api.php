@@ -55,8 +55,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('/applications', ApplicationController::class)->only(['index', 'show']);
 
     // ── Database Asisten (approved) ───────────────────────────
-    Route::get('/database/asisten', [ApplicationController::class, 'database']);
-    Route::get('/database/asisten-unik', [ApplicationController::class, 'databaseUnique']);
+    Route::middleware('role:admin,dosen')->group(function () {
+        Route::get('/database/asisten', [ApplicationController::class, 'database']);
+        Route::get('/database/asisten-unik', [ApplicationController::class, 'databaseUnique']);
+    });
 });
 
 Route::post('/login', [AuthController::class, 'login']);

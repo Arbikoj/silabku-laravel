@@ -38,7 +38,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('seleksi.index');
 
     // ── Database Asisten ─────────────────────────────────────
-    Route::prefix('database')->name('database.')->group(function () {
+    Route::prefix('database')->name('database.')->middleware('role:admin,dosen')->group(function () {
         Route::get('/', fn() => Inertia::render('database/asisten/page'))->name('asisten');
         Route::get('/event', fn() => Inertia::render('database/per-event/page'))->name('per-event');
     });

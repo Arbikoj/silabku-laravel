@@ -90,7 +90,7 @@ export function AppSidebar() {
         ...(role === 'user' ? oprecItems : []),
         ...(role === 'admin' ? adminItems : []),
         ...((role === 'admin' || role === 'dosen') ? seleksiItems : []),
-        ...databaseItems,
+        ...((role === 'admin' || role === 'dosen') ? databaseItems : []),
     ];
 
     const footerNavItems: NavItem[] = [
