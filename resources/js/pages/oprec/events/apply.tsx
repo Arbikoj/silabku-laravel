@@ -7,8 +7,19 @@ import api from '@/lib/api';
 import { BreadcrumbItem } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/react';
 import { AlertTriangle, ArrowLeft, Check, Info, Send } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+
+const ALL_GRADES = ['A', 'AB', 'B', 'BC', 'C', 'D', 'E'];
+const getValidGrades = (minGrade: string) => {
+    if (!minGrade) return ALL_GRADES;
+    const index = ALL_GRADES.indexOf(minGrade);
+    return index >= 0 ? ALL_GRADES.slice(0, index + 1) : ALL_GRADES;
+};
 
 export default function ApplicationFormPage({ eventId }: { eventId: string }) {
     const { auth } = usePage<{ auth: { user: any } }>().props;
@@ -17,6 +28,8 @@ export default function ApplicationFormPage({ eventId }: { eventId: string }) {
     const [loading, setLoading] = useState(true);
     const [selectedMK, setSelectedMK] = useState<number[]>([]);
     const [submitting, setSubmitting] = useState(false);
+    const [modalOpen, setModalOpen] = useState(false);
+    const [formData, setFormData] = useState<Record<number, { nilai: string; file: File | null }>>({});
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Open Recruitment', href: '/oprec/events' },
@@ -35,25 +48,35 @@ export default function ApplicationFormPage({ eventId }: { eventId: string }) {
         setSelectedMK((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
     };
 
-    const submit = async () => {
+    const openModal = () => {
         if (selectedMK.length === 0) return toast.error('Pilih minimal satu mata kuliah');
         const profile = auth.user.profile;
         if (!profile || !profile.nama_lengkap || !profile.norek || !profile.transkrip_gd_id || !profile.ktm_gd_id || !profile.nilai_ipk || !profile.no_wa) {
             return toast.error('Harap lengkapi Profil Anda terlebih dahulu!');
         }
+        setFormData(selectedMK.reduce((acc, id) => ({ ...acc, [id]: { nilai: '', file: null } }), {}));
+        setModalOpen(true);
+    };
 
+    const submit = async () => {
         setSubmitting(true);
         try {
-            await api.post('/applications/apply', {
-                event_id: eventId,
-                event_mata_kuliah_ids: selectedMK,
+            const data = new FormData();
+            data.append('event_id', eventId);
+            selectedMK.forEach((id, index) => {
+                data.append(`applications[${index}][event_mata_kuliah_id]`, id.toString());
+                data.append(`applications[${index}][nilai_mata_kuliah]`, formData[id]?.nilai || '');
+                if (formData[id]?.file) data.append(`applications[${index}][sptjm_file]`, formData[id]?.file as File);
             });
+
+            await api.post('/applications/apply', data, { headers: { 'Content-Type': 'multipart/form-data' } });
             toast.success('Pendaftaran berhasil dikirim!');
             window.location.href = '/oprec/my-applications';
         } catch (e: any) {
             toast.error(e.response?.data?.message ?? 'Gagal mengirim pendaftaran');
         } finally {
             setSubmitting(false);
+            setModalOpen(false);
         }
     };
 
@@ -69,6 +92,48 @@ export default function ApplicationFormPage({ eventId }: { eventId: string }) {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Daftar ${event?.nama}`} />
+            <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+                <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle>Lengkapi Data Pendaftaran</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        {selectedMK.map((id) => {
+                            const emk = event.event_mata_kuliah.find((x: any) => x.id === id);
+                            const minGrade = emk.mata_kuliah.nilai_minimum;
+                            return (
+                                <div key={id} className="p-4 border rounded-md space-y-3">
+                                    <div className="font-bold text-sm">{emk.mata_kuliah.nama} - Kelas {emk.kelas.nama}</div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="space-y-1">
+                                            <Label>Nilai Anda (Min: {minGrade || '-'}) <span className="text-red-500">*</span></Label>
+                                            <Select value={formData[id]?.nilai} onValueChange={(v) => setFormData(prev => ({...prev, [id]: {...prev[id], nilai: v}}))}>
+                                                <SelectTrigger><SelectValue placeholder="Pilih Nilai..." /></SelectTrigger>
+                                                <SelectContent>
+                                                    {getValidGrades(minGrade).map(g => (
+                                                        <SelectItem key={g} value={g}>{g}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <Label>File SPTJM (PDF) <span className="text-red-500">*</span></Label>
+                                            <Input type="file" accept=".pdf" onChange={(e) => {
+                                                const file = e.target.files?.[0] || null;
+                                                setFormData(prev => ({...prev, [id]: {...prev[id], file}}));
+                                            }} />
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setModalOpen(false)}>Batal</Button>
+                        <Button onClick={submit} disabled={submitting || selectedMK.some(id => !formData[id]?.nilai || !formData[id]?.file)}>{submitting ? 'Mengirim...' : 'Kirim Pendaftaran'}</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
             <div className="p-5">
                 <div className="mb-6">
                     <Button asChild variant="ghost" size="sm" className="text-muted-foreground group mb-4 -ml-2">
@@ -121,9 +186,8 @@ export default function ApplicationFormPage({ eventId }: { eventId: string }) {
                                         );
                                         const hasApplied = !!appliedOption;
                                         const isSelected = selectedMK.includes(emk.id) || hasApplied;
-                                        const minIpk = parseFloat(emk.mata_kuliah.nilai_minimum);
-                                        const myIpk = parseFloat(auth.user.profile?.nilai_ipk || '0');
-                                        const isEligible = minIpk === 0 || myIpk >= minIpk;
+                                        const minGrade = emk.mata_kuliah.nilai_minimum;
+                                        const isEligible = true;
 
                                         return (
                                             <div
@@ -133,8 +197,8 @@ export default function ApplicationFormPage({ eventId }: { eventId: string }) {
                                             >
                                                 <Checkbox
                                                     checked={isSelected}
-                                                    disabled={!isEligible || hasApplied}
-                                                    onCheckedChange={() => !hasApplied && isEligible && toggleMK(emk.id)}
+                                                    disabled={hasApplied}
+                                                    onCheckedChange={() => !hasApplied && toggleMK(emk.id)}
                                                     className="mt-1"
                                                 />
                                                 <div className="flex-1">
@@ -165,11 +229,9 @@ export default function ApplicationFormPage({ eventId }: { eventId: string }) {
                                                     </p>
 
                                                     <div className="flex items-center gap-3">
-                                                        {minIpk > 0 && (
-                                                            <div
-                                                                className={`flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10px] ${isEligible ? 'border-green-200 bg-green-50 text-green-700' : 'border-red-200 bg-red-50 text-red-700'}`}
-                                                            >
-                                                                <Info className="h-3 w-3" /> Min. IPK: {minIpk}
+                                                        {minGrade && (
+                                                            <div className="flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/5 text-primary px-2 py-0.5 text-[10px]">
+                                                                <Info className="h-3 w-3" /> Syarat Nilai Minimal: {minGrade}
                                                             </div>
                                                         )}
                                                         <div className="text-muted-foreground flex items-center gap-1 text-[10px]">
@@ -239,16 +301,10 @@ export default function ApplicationFormPage({ eventId }: { eventId: string }) {
                             <CardFooter className="bg-muted/50 pt-6">
                                 <Button
                                     className="shadow-primary/20 h-12 w-full shadow-md"
-                                    disabled={submitting || selectedMK.length === 0 || profileIncomplete}
-                                    onClick={submit}
+                                    disabled={selectedMK.length === 0 || profileIncomplete}
+                                    onClick={openModal}
                                 >
-                                    {submitting ? (
-                                        'Mengirim...'
-                                    ) : (
-                                        <>
-                                            Kirim Pendaftaran <Send className="ml-2 h-4 w-4" />
-                                        </>
-                                    )}
+                                    Pilih Nilai & Upload SPTJM <Send className="ml-2 h-4 w-4" />
                                 </Button>
                             </CardFooter>
                         </Card>

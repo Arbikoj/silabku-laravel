@@ -55,9 +55,9 @@ class RecruitmentSeeder extends Seeder
         $s2 = Semester::create(['nama' => 'Genap 2025/2026', 'tipe' => 'genap', 'tahun' => 2025, 'is_active' => false]);
 
         // 3. Create Mata Kuliah
-        $mk1 = MataKuliah::create(['kode' => 'IF101', 'nama' => 'Dasar Pemrograman', 'sks' => 3, 'nilai_minimum' => 3.00]);
-        $mk2 = MataKuliah::create(['kode' => 'IF202', 'nama' => 'Struktur Data', 'sks' => 3, 'nilai_minimum' => 3.25]);
-        $mk3 = MataKuliah::create(['kode' => 'IF303', 'nama' => 'Basis Data', 'sks' => 4, 'nilai_minimum' => 0.00]);
+        $mk1 = MataKuliah::create(['kode' => 'IF101', 'nama' => 'Dasar Pemrograman', 'sks' => 3, 'nilai_minimum' => 'B']);
+        $mk2 = MataKuliah::create(['kode' => 'IF202', 'nama' => 'Struktur Data', 'sks' => 3, 'nilai_minimum' => 'B']);
+        $mk3 = MataKuliah::create(['kode' => 'IF303', 'nama' => 'Basis Data', 'sks' => 4, 'nilai_minimum' => null]);
 
         // 4. Create Kelas
         $k1 = Kelas::create(['mata_kuliah_id' => $mk1->id, 'nama' => 'RA', 'jumlah_mhs' => 40]); // Kuota 5

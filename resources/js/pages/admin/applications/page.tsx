@@ -48,6 +48,8 @@ interface Candidate {
     nim: string;
     ipk?: number;
     no_wa?: string;
+    nilai_mata_kuliah?: string;
+    sptjm_gd_id?: string;
     other_choices: OtherChoice[];
 }
 
@@ -282,9 +284,15 @@ export default function ApplicationSelectionPage() {
                                                                     </Badge>
                                                                 </div>
 
-                                                                <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                                                                <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
                                                                     <span>NIM: {candidate.nim || '-'}</span>
                                                                     <span>IPK: {candidate.ipk ?? '-'}</span>
+                                                                    <span>Nilai Syarat: <strong className="text-foreground">{candidate.nilai_mata_kuliah ?? '-'}</strong></span>
+                                                                    {candidate.sptjm_gd_id && (
+                                                                        <a href={`/storage/${candidate.sptjm_gd_id}`} target="_blank" className="font-medium text-primary hover:underline">
+                                                                            📄 Lihat SPTJM
+                                                                        </a>
+                                                                    )}
                                                                 </div>
 
                                                                 {candidate.other_choices.length > 0 && (

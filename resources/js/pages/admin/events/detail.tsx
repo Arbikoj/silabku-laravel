@@ -43,6 +43,9 @@ interface ApprovedAssistant {
     kelas: string;
     nama_asisten: string;
     nim: string;
+    ipk?: number;
+    nilai_mata_kuliah?: string;
+    sptjm_gd_id?: string;
 }
 
 interface EventDetail {
@@ -74,6 +77,8 @@ interface ReplacementCandidate {
     nama_asisten: string;
     nim: string;
     ipk?: number;
+    nilai_mata_kuliah?: string;
+    sptjm_gd_id?: string;
     mata_kuliah: string;
     kelas: string;
 }
@@ -375,6 +380,16 @@ export default function EventDetailPage({ eventId }: { eventId: string }) {
                 <div>
                     <div className="font-semibold">{row.original.nama_asisten}</div>
                     <div className="text-xs uppercase tracking-wide text-muted-foreground">{row.original.nim}</div>
+                    <div className="mt-1 flex flex-wrap gap-2">
+                        {row.original.nilai_mata_kuliah && (
+                            <Badge variant="secondary" className="text-[10px]">Nilai: {row.original.nilai_mata_kuliah}</Badge>
+                        )}
+                        {row.original.sptjm_gd_id && (
+                            <a href={`/storage/${row.original.sptjm_gd_id}`} target="_blank" className="text-[10px] text-primary hover:underline" onClick={e => e.stopPropagation()}>
+                                📄 SPTJM
+                            </a>
+                        )}
+                    </div>
                 </div>
             ),
         },
@@ -655,11 +670,19 @@ export default function EventDetailPage({ eventId }: { eventId: string }) {
                                                     {candidate.mata_kuliah} - Kelas {candidate.kelas}
                                                 </div>
                                             </div>
-                                            <div className="flex items-center gap-2">
-                                                {candidate.ipk !== undefined && <Badge variant="secondary">IPK {candidate.ipk}</Badge>}
-                                                <Badge variant="outline" className="capitalize">
-                                                    {candidate.status}
-                                                </Badge>
+                                            <div className="flex flex-col items-end gap-2">
+                                                <div className="flex gap-2">
+                                                    {candidate.ipk !== undefined && <Badge variant="secondary">IPK {candidate.ipk}</Badge>}
+                                                    {candidate.nilai_mata_kuliah && <Badge variant="secondary">Nilai {candidate.nilai_mata_kuliah}</Badge>}
+                                                    <Badge variant="outline" className="capitalize">
+                                                        {candidate.status}
+                                                    </Badge>
+                                                </div>
+                                                {candidate.sptjm_gd_id && (
+                                                    <a href={`/storage/${candidate.sptjm_gd_id}`} target="_blank" className="text-xs font-medium text-primary hover:underline" onClick={e => e.stopPropagation()}>
+                                                        📄 Lihat SPTJM
+                                                    </a>
+                                                )}
                                             </div>
                                         </div>
                                     </button>

@@ -36,7 +36,7 @@ class MataKuliahController extends Controller
             'kode' => 'required|string|max:20|unique:mata_kuliah,kode',
             'nama' => 'required|string|max:255',
             'sks' => 'required|integer|min:1|max:6',
-            'nilai_minimum' => 'nullable|numeric|min:0|max:4',
+            'nilai_minimum' => 'nullable|string|in:A,AB,B,BC,C,D,E',
         ]);
 
         $mk = MataKuliah::create($request->only(['kode', 'nama', 'sks', 'nilai_minimum']));
@@ -50,7 +50,7 @@ class MataKuliahController extends Controller
             'kode' => 'required|string|max:20|unique:mata_kuliah,kode,' . $mataKuliah->id,
             'nama' => 'required|string|max:255',
             'sks' => 'required|integer|min:1|max:6',
-            'nilai_minimum' => 'nullable|numeric|min:0|max:4',
+            'nilai_minimum' => 'nullable|string|in:A,AB,B,BC,C,D,E',
         ]);
 
         $mataKuliah->update($request->only(['kode', 'nama', 'sks', 'nilai_minimum']));

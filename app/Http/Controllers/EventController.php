@@ -66,6 +66,9 @@ class EventController extends Controller
                     'kelas' => $amk->eventMataKuliah?->kelas?->nama ?? 'N/A',
                     'nama_asisten' => $amk->application?->user?->profile?->nama_lengkap ?? $amk->application?->user?->name ?? 'Unknown',
                     'nim' => $amk->application?->user?->nim,
+                    'ipk' => $amk->application?->user?->profile?->nilai_ipk,
+                    'nilai_mata_kuliah' => $amk->nilai_mata_kuliah,
+                    'sptjm_gd_id' => $amk->sptjm_gd_id,
                 ];
             });
 

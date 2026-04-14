@@ -9,20 +9,21 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Admin', href: '#' }, { title: 'Mata Kuliah', href: '/admin/mata-kuliah' }];
 
-interface MataKuliah { id: number; kode: string; nama: string; sks: number; nilai_minimum: number; kelas: any[]; }
+interface MataKuliah { id: number; kode: string; nama: string; sks: number; nilai_minimum: string | null; kelas: any[]; }
 
 function MKModal({ open, onClose, onSaved, initial }: {
     open: boolean; onClose: () => void; onSaved: () => void; initial?: MataKuliah;
 }) {
-    const [form, setForm] = useState({ kode: '', nama: '', sks: 2, nilai_minimum: 0 });
+    const [form, setForm] = useState({ kode: '', nama: '', sks: 2, nilai_minimum: '' });
 
     useEffect(() => {
-        if (initial) setForm({ kode: initial.kode, nama: initial.nama, sks: initial.sks, nilai_minimum: initial.nilai_minimum });
-        else setForm({ kode: '', nama: '', sks: 2, nilai_minimum: 0 });
+        if (initial) setForm({ kode: initial.kode, nama: initial.nama, sks: initial.sks, nilai_minimum: initial.nilai_minimum || '' });
+        else setForm({ kode: '', nama: '', sks: 2, nilai_minimum: '' });
     }, [initial, open]);
 
     const submit = async () => {
@@ -56,9 +57,18 @@ function MKModal({ open, onClose, onSaved, initial }: {
                         <Input value={form.nama} onChange={e => setForm(f => ({ ...f, nama: e.target.value }))} placeholder="Algoritma dan Pemrograman" />
                     </div>
                     <div className="grid gap-1">
-                        <Label>Nilai Minimum (IPK Syarat, 0 = tidak ada syarat)</Label>
-                        <Input type="number" step="0.01" min={0} max={4} value={form.nilai_minimum}
-                            onChange={e => setForm(f => ({ ...f, nilai_minimum: parseFloat(e.target.value) }))} />
+                        <Label>Nilai Minimum Syarat Mata Kuliah</Label>
+                        <Select value={(!form.nilai_minimum) ? "none" : form.nilai_minimum} onValueChange={v => setForm(f => ({ ...f, nilai_minimum: v === 'none' ? '' : v }))}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Pilih syarat nilai..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="none">Tidak ada syarat</SelectItem>
+                                {['A', 'AB', 'B', 'BC', 'C', 'D', 'E'].map(grade => (
+                                    <SelectItem key={grade} value={grade}>Minimal {grade}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
                 </div>
                 <DialogFooter>
@@ -126,7 +136,7 @@ export default function MataKuliahPage() {
                                     <td className="px-4 py-3 font-medium">{mk.nama}</td>
                                     <td className="px-4 py-3">{mk.sks} SKS</td>
                                     <td className="px-4 py-3">
-                                        {mk.nilai_minimum > 0
+                                        {mk.nilai_minimum
                                             ? <Badge variant="outline">&ge; {mk.nilai_minimum}</Badge>
                                             : <span className="text-muted-foreground">—</span>}
                                     </td>

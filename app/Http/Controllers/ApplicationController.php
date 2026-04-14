@@ -118,8 +118,10 @@ class ApplicationController extends Controller
     {
         $request->validate([
             'event_id' => 'required|exists:events,id',
-            'event_mata_kuliah_ids' => 'required|array|min:1',
-            'event_mata_kuliah_ids.*' => 'exists:event_mata_kuliah,id',
+            'applications' => 'required|array|min:1',
+            'applications.*.event_mata_kuliah_id' => 'required|exists:event_mata_kuliah,id',
+            'applications.*.nilai_mata_kuliah' => 'required|string|in:A,AB,B,BC,C,D,E',
+            'applications.*.sptjm_file' => 'required|file|mimes:pdf|max:5120',
         ]);
 
         $user = Auth::user();
@@ -137,16 +139,25 @@ class ApplicationController extends Controller
             return response()->json(['message' => 'Harap lengkapi Profil Anda (KTM, Transkrip, Info Pembayaran, Nomor WhatsApp, dan IPK) terlebih dahulu sebelum mendaftar event.'], 422);
         }
 
-        $ipk = (float) $profile->nilai_ipk;
-        $emkIds = $request->event_mata_kuliah_ids;
-        $emks = EventMataKuliah::with('mataKuliah')->whereIn('id', $emkIds)->get();
+        $applicationsData = $request->applications;
+        $emkIds = collect($applicationsData)->pluck('event_mata_kuliah_id')->toArray();
+        $emks = EventMataKuliah::with(['mataKuliah', 'kelas'])->whereIn('id', $emkIds)->get()->keyBy('id');
 
-        foreach ($emks as $emk) {
-            $minNilai = (float) $emk->mataKuliah->nilai_minimum;
-            if ($minNilai > 0 && $ipk < $minNilai) {
-                return response()->json([
-                    'message' => "IPK Anda tidak memenuhi syarat minimum {$minNilai} untuk mata kuliah {$emk->mataKuliah->nama}.",
-                ], 422);
+        $gradeValues = ['A' => 4, 'AB' => 3.5, 'B' => 3, 'BC' => 2.5, 'C' => 2, 'D' => 1, 'E' => 0];
+
+        foreach ($applicationsData as $appData) {
+            $emk = $emks[$appData['event_mata_kuliah_id']];
+            $minNilai = $emk->mataKuliah->nilai_minimum;
+
+            if ($minNilai && isset($gradeValues[$minNilai])) {
+                $userGradeValue = $gradeValues[$appData['nilai_mata_kuliah']] ?? -1;
+                $requiredGradeValue = $gradeValues[$minNilai];
+
+                if ($userGradeValue < $requiredGradeValue) {
+                    return response()->json([
+                        'message' => "Nilai Anda ({$appData['nilai_mata_kuliah']}) tidak memenuhi syarat minimum ({$minNilai}) untuk mata kuliah {$emk->mataKuliah->nama}.",
+                    ], 422);
+                }
             }
         }
 
@@ -167,23 +178,35 @@ class ApplicationController extends Controller
                 ->toArray();
 
             $added = false;
-            foreach ($emkIds as $emkId) {
+            foreach ($applicationsData as $index => $appData) {
+                $emkId = $appData['event_mata_kuliah_id'];
                 if (!in_array($emkId, $existingEmkIds)) {
+                    $emk = $emks[$emkId];
+                    // Upload SPTJM file
+                    $file = $request->file("applications.{$index}.sptjm_file");
+                    $folderName = "SPTJM/" . preg_replace('/[^A-Za-z0-9\- \_]/', '', $emk->mataKuliah->nama);
+                    $filename = "{$emk->kelas->nama}-{$user->nim}-{$user->name}.{$file->extension()}";
+                    $path = \Illuminate\Support\Facades\Storage::disk('google')->putFileAs($folderName, $file, $filename);
+
                     ApplicationMataKuliah::create([
                         'application_id' => $application->id,
                         'event_mata_kuliah_id' => $emkId,
+                        'nilai_mata_kuliah' => $appData['nilai_mata_kuliah'],
+                        'sptjm_gd_id' => $path,
                     ]);
                     $added = true;
                 }
             }
 
             if (!$added && $existingApplication) {
+                 DB::rollBack();
                  return response()->json(['message' => 'Anda sudah mendaftar untuk mata kuliah yang dipilih.'], 422);
             }
 
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
+            \Illuminate\Support\Facades\Log::error('Apply error: ' . $e->getMessage());
             return response()->json(['message' => 'Gagal mendaftar, coba lagi.'], 500);
         }
 
@@ -266,6 +289,8 @@ class ApplicationController extends Controller
                             'nama_asisten' => $choice->application?->user?->profile?->nama_lengkap ?? $choice->application?->user?->name ?? 'Unknown',
                             'nim' => $choice->application?->user?->nim,
                             'ipk' => $choice->application?->user?->profile?->nilai_ipk,
+                            'nilai_mata_kuliah' => $choice->nilai_mata_kuliah,
+                            'sptjm_gd_id' => $choice->sptjm_gd_id,
                             'no_wa' => $choice->application?->user?->profile?->no_wa,
                             'other_choices' => $otherChoices,
                         ];
@@ -491,6 +516,8 @@ class ApplicationController extends Controller
                 'nama_asisten' => $item->application?->user?->profile?->nama_lengkap ?? $item->application?->user?->name ?? 'Unknown',
                 'nim' => $item->application?->user?->nim,
                 'ipk' => $item->application?->user?->profile?->nilai_ipk,
+                'nilai_mata_kuliah' => $item->nilai_mata_kuliah,
+                'sptjm_gd_id' => $item->sptjm_gd_id,
                 'mata_kuliah' => $item->eventMataKuliah?->mataKuliah?->nama ?? 'N/A',
                 'kelas' => $item->eventMataKuliah?->kelas?->nama ?? 'N/A',
             ];
