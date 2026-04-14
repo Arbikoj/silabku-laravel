@@ -1,9 +1,11 @@
+import { DocumentViewerDialog } from '@/components/document-viewer-dialog';
 import AppLayout from '@/layouts/app-layout';
 import api from '@/lib/api';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/react';
-import { Check, ChevronDown, ChevronRight, Search, Users, X } from 'lucide-react';
+import { AxiosError } from 'axios';
+import { Check, ChevronDown, ChevronRight, FileText, GraduationCap, Search, Users, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -49,7 +51,8 @@ interface Candidate {
     ipk?: number;
     no_wa?: string;
     nilai_mata_kuliah?: string;
-    sptjm_gd_id?: string;
+    has_sptjm?: boolean;
+    has_transkrip?: boolean;
     other_choices: OtherChoice[];
 }
 
@@ -123,8 +126,10 @@ export default function ApplicationSelectionPage() {
             await api.post(`/applications/choices/${choiceId}/${type}`, { catatan: null });
             toast.success(type === 'approve' ? 'Asisten berhasil di-ACC' : 'Pilihan berhasil ditolak');
             fetchBoard();
-        } catch (error: any) {
-            toast.error(error?.response?.data?.message || 'Gagal memproses pilihan');
+        } catch (error: unknown) {
+            const responseMessage =
+                error instanceof AxiosError ? (error.response?.data as { message?: string } | undefined)?.message : undefined;
+            toast.error(responseMessage || 'Gagal memproses pilihan');
         } finally {
             setProcessingChoiceId(null);
         }
@@ -287,11 +292,34 @@ export default function ApplicationSelectionPage() {
                                                                 <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
                                                                     <span>NIM: {candidate.nim || '-'}</span>
                                                                     <span>IPK: {candidate.ipk ?? '-'}</span>
-                                                                    <span>Nilai Syarat: <strong className="text-foreground">{candidate.nilai_mata_kuliah ?? '-'}</strong></span>
-                                                                    {candidate.sptjm_gd_id && (
-                                                                        <a href={`/storage/${candidate.sptjm_gd_id}`} target="_blank" className="font-medium text-primary hover:underline">
-                                                                            📄 Lihat SPTJM
-                                                                        </a>
+                                                                    <span>
+                                                                        Nilai MK: <strong className="text-foreground">{candidate.nilai_mata_kuliah ?? '-'}</strong>
+                                                                    </span>
+                                                                    {candidate.no_wa && <span>WA: {candidate.no_wa}</span>}
+                                                                </div>
+
+                                                                <div className="mt-3 flex flex-wrap items-center gap-2">
+                                                                    {candidate.has_sptjm && (
+                                                                        <DocumentViewerDialog
+                                                                            title={`SPTJM - ${candidate.nama_asisten}`}
+                                                                            src={`/seleksi/choices/${candidate.choice_id}/sptjm`}
+                                                                            trigger={
+                                                                                <Button size="sm" variant="outline" className="h-8">
+                                                                                    <FileText className="h-3.5 w-3.5" /> Lihat SPTJM
+                                                                                </Button>
+                                                                            }
+                                                                        />
+                                                                    )}
+                                                                    {candidate.has_transkrip && (
+                                                                        <DocumentViewerDialog
+                                                                            title={`Transkrip - ${candidate.nama_asisten}`}
+                                                                            src={`/seleksi/choices/${candidate.choice_id}/transkrip`}
+                                                                            trigger={
+                                                                                <Button size="sm" variant="outline" className="h-8">
+                                                                                    <GraduationCap className="h-3.5 w-3.5" /> Lihat Transkrip
+                                                                                </Button>
+                                                                            }
+                                                                        />
                                                                     )}
                                                                 </div>
 

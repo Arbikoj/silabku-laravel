@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { DocumentViewerDialog } from '@/components/document-viewer-dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
@@ -13,9 +13,28 @@ import { toast } from 'sonner';
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Profil Asisten', href: '/profil' }];
 
+interface AuthProfile {
+    foto?: string | null;
+    nama_lengkap?: string | null;
+    no_wa?: string | null;
+    norek?: string | null;
+    nama_rek?: string | null;
+    bank?: string | null;
+    nilai_ipk?: number | null;
+    transkrip_gd_id?: string | null;
+    ktm_gd_id?: string | null;
+}
+
+interface AuthUser {
+    name?: string;
+    nim?: string;
+    email?: string;
+    profile?: AuthProfile | null;
+}
+
 export default function AssistantProfilePage() {
-    const { auth } = usePage<{ auth: { user: any } }>().props;
-    const [profile, setProfile] = useState<any>(null);
+    const { auth } = usePage<{ auth: { user: AuthUser } }>().props;
+    const [profile, setProfile] = useState<AuthProfile | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
 
@@ -237,28 +256,15 @@ export default function AssistantProfilePage() {
                                             className="cursor-pointer"
                                         />
                                         {profile?.transkrip_gd_id && !transkripFile && (
-                                            <Dialog>
-                                                <DialogTrigger asChild>
+                                            <DocumentViewerDialog
+                                                title="Transkrip Nilai"
+                                                src="/profil/transkrip"
+                                                trigger={
                                                     <Button type="button" variant="outline" className="shrink-0 gap-2">
                                                         Lihat <ExternalLink className="h-4 w-4" />
                                                     </Button>
-                                                </DialogTrigger>
-                                                <DialogContent className="flex h-[95vh] w-[80vw] max-w-[80vw] flex-col p-6 pt-12 sm:pt-6">
-                                                    <DialogHeader className="sr-only">
-                                                        <DialogTitle>Transkrip Nilai</DialogTitle>
-                                                    </DialogHeader>
-                                                    <div className="bg-muted/30 border-border/50 relative h-full w-full flex-1 overflow-hidden rounded-md border">
-                                                        <div className="text-muted-foreground absolute inset-0 -z-10 flex animate-pulse items-center justify-center">
-                                                            Memuat Dokumen...
-                                                        </div>
-                                                        <iframe
-                                                            src="/profil/transkrip"
-                                                            className="absolute inset-0 z-10 h-full w-full border-0"
-                                                            title="Transkrip Nilai"
-                                                        />
-                                                    </div>
-                                                </DialogContent>
-                                            </Dialog>
+                                                }
+                                            />
                                         )}
                                     </div>
                                     <p className="text-muted-foreground mt-1 text-[10px] text-red-500 italic">
@@ -276,38 +282,16 @@ export default function AssistantProfilePage() {
                                             className="cursor-pointer"
                                         />
                                         {profile?.ktm_gd_id && !ktmFile && (
-                                            <Dialog>
-                                                <DialogTrigger asChild>
+                                            <DocumentViewerDialog
+                                                title="Kartu Tanda Mahasiswa"
+                                                src="/profil/ktm"
+                                                fileType={profile?.ktm_gd_id?.match(/\.(jpeg|jpg|gif|png)$/i) ? 'image' : 'pdf'}
+                                                trigger={
                                                     <Button type="button" variant="outline" className="shrink-0 gap-2">
                                                         Lihat <ExternalLink className="h-4 w-4" />
                                                     </Button>
-                                                </DialogTrigger>
-                                                <DialogContent className="flex h-[95vh] w-[80vw] max-w-[80vw] flex-col p-6 pt-12 sm:pt-6">
-                                                    <DialogHeader className="sr-only">
-                                                        <DialogTitle>KTM</DialogTitle>
-                                                    </DialogHeader>
-                                                    <div className="bg-muted/30 border-border/50 relative h-full w-full flex-1 overflow-hidden rounded-md border">
-                                                        <div className="text-muted-foreground absolute inset-0 -z-10 flex animate-pulse items-center justify-center">
-                                                            Memuat Dokumen...
-                                                        </div>
-                                                        {profile?.ktm_gd_id?.match(/\.(jpeg|jpg|gif|png)$/i) ? (
-                                                            <div className="absolute inset-0 z-10 flex items-center justify-center p-4">
-                                                                <img
-                                                                    src="/profil/ktm"
-                                                                    alt="KTM"
-                                                                    className="max-h-full max-w-full object-contain"
-                                                                />
-                                                            </div>
-                                                        ) : (
-                                                            <iframe
-                                                                src="/profil/ktm"
-                                                                className="absolute inset-0 z-10 h-full w-full border-0"
-                                                                title="KTM"
-                                                            />
-                                                        )}
-                                                    </div>
-                                                </DialogContent>
-                                            </Dialog>
+                                                }
+                                            />
                                         )}
                                     </div>
                                     <p className="text-muted-foreground mt-1 text-[10px] text-red-500 italic">

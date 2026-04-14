@@ -38,6 +38,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/seleksi', fn() => Inertia::render('admin/applications/page'))
         ->middleware('role:admin,dosen')
         ->name('seleksi.index');
+    Route::get('/seleksi/choices/{choice}/sptjm', [\App\Http\Controllers\ApplicationController::class, 'reviewerChoiceSptjm'])
+        ->middleware('role:admin,dosen')
+        ->name('seleksi.choice.sptjm');
+    Route::get('/seleksi/choices/{choice}/transkrip', [\App\Http\Controllers\ApplicationController::class, 'reviewerChoiceTranscript'])
+        ->middleware('role:admin,dosen')
+        ->name('seleksi.choice.transkrip');
 
     // ── Database Asisten ─────────────────────────────────────
     Route::prefix('database')->name('database.')->middleware('role:admin,dosen')->group(function () {

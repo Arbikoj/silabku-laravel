@@ -10,10 +10,18 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Throwable;
 
 class ApplicationController extends Controller
 {
+    private function ensureReviewerDocumentAccess(): void
+    {
+        $user = Auth::user();
+
+        abort_unless($user && in_array($user->role, ['admin', 'dosen'], true), 403);
+    }
+
     private function calculateAssistantQuota(?int $studentCount): int
     {
         return (int) ceil(((int) $studentCount) / 8);
@@ -290,7 +298,8 @@ class ApplicationController extends Controller
                             'nim' => $choice->application?->user?->nim,
                             'ipk' => $choice->application?->user?->profile?->nilai_ipk,
                             'nilai_mata_kuliah' => $choice->nilai_mata_kuliah,
-                            'sptjm_gd_id' => $choice->sptjm_gd_id,
+                            'has_sptjm' => filled($choice->sptjm_gd_id),
+                            'has_transkrip' => filled($choice->application?->user?->profile?->transkrip_gd_id),
                             'no_wa' => $choice->application?->user?->profile?->no_wa,
                             'other_choices' => $otherChoices,
                         ];
@@ -336,6 +345,31 @@ class ApplicationController extends Controller
                 'total_choices' => $choices->count(),
             ],
         ]);
+    }
+
+    public function reviewerChoiceSptjm(ApplicationMataKuliah $choice)
+    {
+        $this->ensureReviewerDocumentAccess();
+
+        if (!$choice->sptjm_gd_id) {
+            abort(404, 'SPTJM tidak ditemukan');
+        }
+
+        return Storage::disk('google')->response($choice->sptjm_gd_id);
+    }
+
+    public function reviewerChoiceTranscript(ApplicationMataKuliah $choice)
+    {
+        $this->ensureReviewerDocumentAccess();
+
+        $choice->loadMissing('application.user.profile');
+        $transkripPath = $choice->application?->user?->profile?->transkrip_gd_id;
+
+        if (!$transkripPath) {
+            abort(404, 'Transkrip tidak ditemukan');
+        }
+
+        return Storage::disk('google')->response($transkripPath);
     }
 
     // ─── Admin/Dosen: list semua aplikasi ────────────────
