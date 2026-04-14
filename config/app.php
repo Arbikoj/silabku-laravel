@@ -123,4 +123,16 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Seeder Flags
+    |--------------------------------------------------------------------------
+    |
+    | Toggle optional seeders from the environment. This is useful for local
+    | setups where dummy applicant data should only be generated on demand.
+    |
+    */
+
+    'seed_dummy_applicants' => (bool) env('SEED_DUMMY_APPLICANTS', false),
+
 ];

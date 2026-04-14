@@ -13,7 +13,15 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             RecruitmentSeeder::class,
-            DummyApplicantSeeder::class,
         ]);
+
+        if (config('app.seed_dummy_applicants')) {
+            $this->call([
+                DummyApplicantSeeder::class,
+            ]);
+            return;
+        }
+
+        $this->command?->warn('DummyApplicantSeeder dilewati. Set SEED_DUMMY_APPLICANTS=true di .env untuk mengaktifkannya.');
     }
 }
