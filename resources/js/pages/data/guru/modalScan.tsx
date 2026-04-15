@@ -1,5 +1,6 @@
 'use client';
 
+import { CenteredSpinner } from '@/components/centered-spinner';
 import {
     AlertDialog,
     AlertDialogCancel,
@@ -144,9 +145,7 @@ export const ScanDeviceDialog: React.FC<ScanDeviceDialogProps> = ({ teacherId, t
                                 ))}
                             </SelectContent>
                         </Select>
-                    ) : (
-                        <p className="text-sm text-gray-500">Memuat daftar device...</p>
-                    )}
+                    ) : <CenteredSpinner className="py-4" iconClassName="h-5 w-5" />}
                     {errors.device_id && <p className="text-sm text-red-600">{errors.device_id[0]}</p>}
                 </div>
 

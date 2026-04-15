@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { ExternalLink, Loader2 } from 'lucide-react';
+import { CenteredSpinner } from '@/components/centered-spinner';
+import { ExternalLink } from 'lucide-react';
 import { ReactNode, useEffect, useState } from 'react';
 
 type DocumentViewerDialogProps = {
@@ -35,9 +36,8 @@ export function DocumentViewerDialog({ title, src, trigger, fileType = 'pdf' }: 
 
                 <div className="bg-muted/30 relative flex-1 overflow-hidden">
                     {open && loading && (
-                        <div className="bg-background/70 absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 backdrop-blur-sm">
-                            <Loader2 className="text-primary h-8 w-8 animate-spin" />
-                            <p className="text-muted-foreground text-sm">Memuat dokumen...</p>
+                        <div className="bg-background/70 absolute inset-0 z-20 backdrop-blur-sm">
+                            <CenteredSpinner className="h-full py-0" iconClassName="text-primary h-8 w-8" />
                         </div>
                     )}
 

@@ -2,6 +2,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import { CenteredSpinner } from '@/components/centered-spinner';
 import AppLayout from '@/layouts/app-layout';
 import api from '@/lib/api';
 import { BreadcrumbItem } from '@/types';
@@ -83,7 +84,7 @@ export default function ApplicationFormPage({ eventId }: { eventId: string }) {
     if (loading)
         return (
             <AppLayout breadcrumbs={breadcrumbs}>
-                <div className="animate-pulse p-10 text-center">Memuat form...</div>
+                <CenteredSpinner className="p-10" />
             </AppLayout>
         );
 

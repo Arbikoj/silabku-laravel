@@ -1,7 +1,8 @@
+import { CenteredSpinner } from '@/components/centered-spinner';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DataTableProps } from '@/interface/TableProps';
 import { flexRender, getCoreRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table';
-import { ArrowLeft, ArrowRight, ChevronDown, ChevronUp, Loader2, MoreHorizontal } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ChevronDown, ChevronUp, MoreHorizontal } from 'lucide-react';
 import { Button } from './ui/button';
 
 type PaginationState = {
@@ -93,9 +94,7 @@ export function DataTable<TData, TValue>({
     return (
         <div className="space-y-4 p-4">
             {isLoading ? (
-                <div className="flex justify-center py-10">
-                    <Loader2 className="text-muted-foreground h-6 w-6 animate-spin" />
-                </div>
+                <CenteredSpinner className="py-10" iconClassName="h-6 w-6" />
             ) : (
                 <>
                     <Table>

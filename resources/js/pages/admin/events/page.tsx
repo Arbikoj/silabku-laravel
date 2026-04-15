@@ -1,3 +1,4 @@
+import { CenteredSpinner } from '@/components/centered-spinner';
 import AppLayout from '@/layouts/app-layout';
 import api from '@/lib/api';
 import { BreadcrumbItem } from '@/types';
@@ -164,7 +165,7 @@ export default function EventAdminPage() {
                     <Button onClick={() => { setEditData(undefined); setModalOpen(true); }}><Plus className="h-4 w-4 mr-1" /> Buat Event</Button>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {loading ? <p>Memuat...</p> : data.map(ev => (
+                    {loading ? <div className="col-span-full"><CenteredSpinner className="py-20" /></div> : data.map(ev => (
                         <div key={ev.id} className="border rounded-xl p-4 bg-card shadow-sm hover:shadow-md transition-shadow">
                             <div className="flex justify-between items-start mb-2">
                                 <Badge variant={ev.is_open ? 'default' : 'secondary'}>{ev.is_open ? 'OPEN' : 'CLOSED'}</Badge>

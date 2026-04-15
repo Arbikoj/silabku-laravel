@@ -1,3 +1,4 @@
+import { CenteredSpinner } from '@/components/centered-spinner';
 import AppLayout from '@/layouts/app-layout';
 import api from '@/lib/api';
 import { BreadcrumbItem } from '@/types';
@@ -109,7 +110,11 @@ export default function LaboratoriumPage() {
                         </thead>
                         <tbody>
                             {loading ? (
-                                <tr><td colSpan={3} className="px-4 py-8 text-center text-muted-foreground">Memuat...</td></tr>
+                                <tr>
+                                    <td colSpan={3} className="px-4 py-8">
+                                        <CenteredSpinner className="py-4" iconClassName="h-6 w-6" />
+                                    </td>
+                                </tr>
                             ) : data.map(lab => (
                                 <tr key={lab.id} className="border-t hover:bg-muted/30">
                                     <td className="px-4 py-3 font-medium">{lab.name}</td>

@@ -1,3 +1,4 @@
+import { CenteredSpinner } from '@/components/centered-spinner';
 import AppLayout from '@/layouts/app-layout';
 import api from '@/lib/api';
 import { BreadcrumbItem } from '@/types';
@@ -419,7 +420,7 @@ export default function EventDetailPage({ eventId }: { eventId: string }) {
     if (loading) {
         return (
             <AppLayout breadcrumbs={[]}>
-                <div className="p-10 text-center">Memuat...</div>
+                <CenteredSpinner className="p-10" />
             </AppLayout>
         );
     }
@@ -551,9 +552,7 @@ export default function EventDetailPage({ eventId }: { eventId: string }) {
                         )}
 
                         {switchLoading ? (
-                            <div className="flex items-center justify-center py-10 text-muted-foreground">
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Memuat opsi switch...
-                            </div>
+                            <CenteredSpinner className="py-10" iconClassName="h-6 w-6" />
                         ) : (
                             <>
                                 <div className="relative">
@@ -645,9 +644,7 @@ export default function EventDetailPage({ eventId }: { eventId: string }) {
 
                         <div className="max-h-[320px] space-y-2 overflow-y-auto pr-1">
                             {replacementLoading ? (
-                                <div className="flex items-center justify-center py-10 text-muted-foreground">
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Memuat kandidat pengganti...
-                                </div>
+                                <CenteredSpinner className="py-10" iconClassName="h-6 w-6" />
                             ) : replaceCandidates.length === 0 ? (
                                 <div className="rounded-xl border border-dashed px-4 py-8 text-center text-sm text-muted-foreground">
                                     Tidak ada kandidat pengganti untuk mata kuliah dan kelas ini.

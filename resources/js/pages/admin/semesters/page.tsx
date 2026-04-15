@@ -1,3 +1,4 @@
+import { CenteredSpinner } from '@/components/centered-spinner';
 import AppLayout from '@/layouts/app-layout';
 import api from '@/lib/api';
 import { BreadcrumbItem } from '@/types';
@@ -107,7 +108,7 @@ export default function SemesterPage() {
                     <h1 className="text-xl font-semibold flex items-center gap-2"><CalendarRange className="h-5 w-5" /> Kelola Semester</h1>
                     <Button onClick={() => { setEditData(undefined); setModalOpen(true); }}><Plus className="h-4 w-4 mr-1" /> Tambah</Button>
                 </div>
-                {loading ? <p className="text-muted-foreground text-sm">Memuat...</p> : (
+                {loading ? <CenteredSpinner className="py-16" /> : (
                     <div className="rounded-lg border overflow-hidden">
                         <table className="w-full text-sm">
                             <thead className="bg-muted">

@@ -1,3 +1,4 @@
+import { CenteredSpinner } from '@/components/centered-spinner';
 import AppLayout from '@/layouts/app-layout';
 import api from '@/lib/api';
 import { cn, PASTEL_PALETTE } from '@/lib/utils';
@@ -153,7 +154,11 @@ export default function MataKuliahPage() {
                         </thead>
                         <tbody>
                             {loading ? (
-                                <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">Memuat...</td></tr>
+                                <tr>
+                                    <td colSpan={6} className="px-4 py-8">
+                                        <CenteredSpinner className="py-4" iconClassName="h-6 w-6" />
+                                    </td>
+                                </tr>
                             ) : data.map(mk => (
                                 <tr key={mk.id} className="border-t hover:bg-muted/30">
                                     <td className="px-4 py-3 font-mono">{mk.kode}</td>

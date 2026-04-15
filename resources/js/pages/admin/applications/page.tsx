@@ -1,3 +1,4 @@
+import { CenteredSpinner } from '@/components/centered-spinner';
 import { DocumentViewerDialog } from '@/components/document-viewer-dialog';
 import AppLayout from '@/layouts/app-layout';
 import api from '@/lib/api';
@@ -219,8 +220,8 @@ export default function ApplicationSelectionPage() {
                 </div>
 
                 {loading ? (
-                    <div className="rounded-2xl border border-dashed py-20 text-center text-sm text-muted-foreground">
-                        Memuat data seleksi...
+                    <div className="rounded-2xl border border-dashed py-10">
+                        <CenteredSpinner className="py-10" />
                     </div>
                 ) : groups.length === 0 ? (
                     <div className="rounded-2xl border border-dashed py-20 text-center text-sm text-muted-foreground">

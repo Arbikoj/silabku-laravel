@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { CenteredSpinner } from '@/components/centered-spinner';
 import { DocumentViewerDialog } from '@/components/document-viewer-dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -119,7 +120,7 @@ export default function AssistantProfilePage() {
     if (loading)
         return (
             <AppLayout breadcrumbs={breadcrumbs}>
-                <div className="animate-pulse p-10 text-center font-medium">Memuat Profil...</div>
+                <CenteredSpinner className="p-10" />
             </AppLayout>
         );
 

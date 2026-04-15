@@ -1,0 +1,11 @@
+import{c as n}from"./createLucideIcon-CQd0PA_c.js";import{r,j as e}from"./app-B9sgK09D.js";import{B as h}from"./button-wvTq6JRX.js";import{D as m,f,a as x,b as p,c as u}from"./dialog-B2m09VY6.js";import{C as b}from"./centered-spinner-BA2MfvWM.js";/**
+ * @license lucide-react v0.475.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */const g=[["path",{d:"M15 3h6v6",key:"1q9fwt"}],["path",{d:"M10 14 21 3",key:"gplh6r"}],["path",{d:"M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6",key:"a6xqqp"}]],j=n("ExternalLink",g);/**
+ * @license lucide-react v0.475.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */const w=[["path",{d:"M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z",key:"1rqfz7"}],["path",{d:"M14 2v4a2 2 0 0 0 2 2h4",key:"tnqrlb"}],["path",{d:"M10 9H8",key:"b1mrlr"}],["path",{d:"M16 13H8",key:"t4e002"}],["path",{d:"M16 17H8",key:"z1uh3a"}]],M=n("FileText",w);function C({title:t,src:s,trigger:o,fileType:i="pdf"}){const[a,c]=r.useState(!1),[d,l]=r.useState(!1);return r.useEffect(()=>{a&&l(!0)},[a,s]),e.jsxs(m,{open:a,onOpenChange:c,children:[e.jsx(f,{asChild:!0,children:o}),e.jsxs(x,{className:"flex h-[96vh] w-[96vw] max-w-[96vw] flex-col gap-0 overflow-hidden p-0 sm:max-w-[96vw]",children:[e.jsxs(p,{className:"flex flex-row items-center justify-between gap-3 border-b px-6 py-4 pr-14",children:[e.jsx(u,{children:t}),e.jsx(h,{asChild:!0,type:"button",variant:"outline",size:"sm",className:"shrink-0",children:e.jsxs("a",{href:s,target:"_blank",rel:"noreferrer",children:[e.jsx(j,{className:"h-4 w-4"})," Buka tab baru"]})})]}),e.jsxs("div",{className:"bg-muted/30 relative flex-1 overflow-hidden",children:[a&&d&&e.jsx("div",{className:"bg-background/70 absolute inset-0 z-20 backdrop-blur-sm",children:e.jsx(b,{className:"h-full py-0",iconClassName:"text-primary h-8 w-8"})}),a?i==="image"?e.jsx("div",{className:"absolute inset-0 flex items-center justify-center p-4",children:e.jsx("img",{src:s,alt:t,className:"max-h-full max-w-full object-contain",onLoad:()=>l(!1)})}):e.jsx("iframe",{src:s,className:"absolute inset-0 h-full w-full border-0",title:t,onLoad:()=>l(!1)}):null]})]})]})}export{C as D,j as E,M as F};

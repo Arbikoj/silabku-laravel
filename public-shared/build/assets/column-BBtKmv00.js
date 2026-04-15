@@ -1,0 +1,1 @@
+const r=[{id:"rowNumber",header:"#",cell:({row:e})=>e.index+1,size:40},{accessorKey:"state",header:"Jam Ke",enableSorting:!0},{accessorKey:"start_hour",header:"Jam Mulai (WIB)",enableSorting:!0},{accessorKey:"end_hour",header:"Jam Selesai (WIB)",enableSorting:!0}];export{r as columns};
