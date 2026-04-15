@@ -31,12 +31,22 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/mata-kuliah/all', [MataKuliahController::class, 'all']);
     Route::apiResource('/mata-kuliah', MataKuliahController::class);
 
+    // ── Laboratorium (admin only) ─────────────────────────────
+    Route::get('/laboratorium/all', [\App\Http\Controllers\LaboratoriumController::class, 'all']);
+    Route::get('/kelas/all', [\App\Http\Controllers\KelasController::class, 'all']);
+    Route::apiResource('/laboratorium', \App\Http\Controllers\LaboratoriumController::class);
+
     // ── Kelas (admin only) ────────────────────────────────────
     Route::apiResource('/kelas', KelasController::class);
 
     // ── Events ────────────────────────────────────────────────
     Route::post('/events/{event}/toggle-open', [EventController::class, 'toggleOpen']);
     Route::apiResource('/events', EventController::class);
+
+    // ── Jadwal Praktikum ──────────────────────────────────────
+    Route::middleware('role:admin,dosen')->group(function () {
+        Route::apiResource('/jadwal-praktikum', \App\Http\Controllers\JadwalPraktikumController::class);
+    });
 
     // ── Applications ──────────────────────────────────────────
     Route::get('/applications/open-events', [ApplicationController::class, 'openEvents']);

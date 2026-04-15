@@ -8,7 +8,7 @@ class MataKuliah extends Model
 {
     protected $table = 'mata_kuliah';
 
-    protected $fillable = ['kode', 'nama', 'sks', 'nilai_minimum'];
+    protected $fillable = ['kode', 'nama', 'sks', 'nilai_minimum', 'color'];
 
     public function kelas()
     {
@@ -18,5 +18,10 @@ class MataKuliah extends Model
     public function eventMataKuliah()
     {
         return $this->hasMany(EventMataKuliah::class);
+    }
+
+    public function jadwalPraktikums()
+    {
+        return $this->hasMany(JadwalPraktikum::class, 'mata_kuliah_id');
     }
 }

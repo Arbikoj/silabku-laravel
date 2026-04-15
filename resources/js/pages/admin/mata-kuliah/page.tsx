@@ -1,5 +1,6 @@
 import AppLayout from '@/layouts/app-layout';
 import api from '@/lib/api';
+import { cn, PASTEL_PALETTE } from '@/lib/utils';
 import { BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/react';
 import { Plus, Pencil, Trash2, BookMarked } from 'lucide-react';
@@ -14,16 +15,16 @@ import { toast } from 'sonner';
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Admin', href: '#' }, { title: 'Mata Kuliah', href: '/admin/mata-kuliah' }];
 
-interface MataKuliah { id: number; kode: string; nama: string; sks: number; nilai_minimum: string | null; kelas: any[]; }
+interface MataKuliah { id: number; kode: string; nama: string; sks: number; nilai_minimum: string | null; color: string | null; kelas: any[]; }
 
 function MKModal({ open, onClose, onSaved, initial }: {
     open: boolean; onClose: () => void; onSaved: () => void; initial?: MataKuliah;
 }) {
-    const [form, setForm] = useState({ kode: '', nama: '', sks: 2, nilai_minimum: '' });
+    const [form, setForm] = useState({ kode: '', nama: '', sks: 2, nilai_minimum: '', color: PASTEL_PALETTE[0] });
 
     useEffect(() => {
-        if (initial) setForm({ kode: initial.kode, nama: initial.nama, sks: initial.sks, nilai_minimum: initial.nilai_minimum || '' });
-        else setForm({ kode: '', nama: '', sks: 2, nilai_minimum: '' });
+        if (initial) setForm({ kode: initial.kode, nama: initial.nama, sks: initial.sks, nilai_minimum: initial.nilai_minimum || '', color: initial.color || PASTEL_PALETTE[0] });
+        else setForm({ kode: '', nama: '', sks: 2, nilai_minimum: '', color: PASTEL_PALETTE[0] });
     }, [initial, open]);
 
     const submit = async () => {
@@ -70,11 +71,34 @@ function MKModal({ open, onClose, onSaved, initial }: {
                             </SelectContent>
                         </Select>
                     </div>
+                    <div className="grid gap-1">
+                        <Label>Warna Identitas (untuk Jadwal)</Label>
+                        <div className="flex flex-wrap gap-2 mb-2">
+                            {PASTEL_PALETTE.map(c => (
+                                <button
+                                    key={c}
+                                    type="button"
+                                    className={cn(
+                                        "w-8 h-8 rounded-full border-2 transition-all hover:scale-110",
+                                        form.color === c ? "border-primary shadow-sm" : "border-transparent"
+                                    )}
+                                    style={{ backgroundColor: c }}
+                                    onClick={() => setForm(f => ({ ...f, color: c }))}
+                                />
+                            ))}
+                        </div>
+                        <div className="flex gap-2 items-center">
+                            <input type="color" className="p-0.5 h-9 w-12 rounded border cursor-pointer" value={form.color} onChange={e => setForm(f => ({ ...f, color: e.target.value }))} />
+                            <Input value={form.color} onChange={e => setForm(f => ({ ...f, color: e.target.value }))} placeholder={PASTEL_PALETTE[0]} className="flex-1 font-mono" />
+                        </div>
+                    </div>
                 </div>
                 <DialogFooter>
                     <Button variant="ghost" onClick={onClose}>Batal</Button>
                     <Button onClick={submit}>Simpan</Button>
                 </DialogFooter>
+
+
             </DialogContent>
         </Dialog>
     );

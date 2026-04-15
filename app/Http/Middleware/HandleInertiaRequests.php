@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Semester;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -60,6 +61,13 @@ class HandleInertiaRequests extends Middleware
             ],
             'sidebarOpen' => !$request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'auth_token' => $request->session()->get('auth_token'),
+            'active_semester' => (function() {
+                try {
+                    return Semester::where('is_active', true)->first();
+                } catch (\Exception $e) {
+                    return null;
+                }
+            })(),
         ];
     }
 }

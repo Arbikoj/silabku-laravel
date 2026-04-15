@@ -29,10 +29,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('admin')->name('admin.')->middleware('role:admin')->group(function () {
         Route::get('/semesters', fn() => Inertia::render('admin/semesters/page'))->name('semesters');
         Route::get('/mata-kuliah', fn() => Inertia::render('admin/mata-kuliah/page'))->name('mata-kuliah');
+        Route::get('/laboratorium', fn() => Inertia::render('admin/laboratorium/page'))->name('laboratorium');
         Route::get('/kelas-list', fn() => Inertia::render('admin/kelas/page'))->name('kelas');
         Route::get('/events', fn() => Inertia::render('admin/events/page'))->name('events');
         Route::get('/events/{id}', fn($id) => Inertia::render('admin/events/detail', ['eventId' => $id]))->name('events.detail');
     });
+
+    // ── Jadwal Praktikum ──────────────────────────────────────
+    Route::get('/jadwal', fn() => Inertia::render('jadwal/page'))
+        ->middleware('role:admin,dosen')
+        ->name('jadwal.index');
 
     // ── Seleksi (admin + dosen) ──────────────────────────────
     Route::get('/seleksi', fn() => Inertia::render('admin/applications/page'))

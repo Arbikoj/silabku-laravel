@@ -34,6 +34,11 @@ class KelasController extends Controller
         ]);
     }
 
+    public function all()
+    {
+        return response()->json(Kelas::with('mataKuliah')->get());
+    }
+
     public function store(Request $request)
     {
         $request->validate([

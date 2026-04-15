@@ -11,12 +11,16 @@ import {
     LayoutGrid,
     GraduationCap,
     ClipboardList,
+    Calendar,
+    Building2,
+    Layers,
 } from 'lucide-react';
 import AppLogo from './app-logo';
 import { NavDropdown } from './nav-dropdown';
+import { Badge } from './ui/badge';
 
 export function AppSidebar() {
-    const { auth } = usePage<{ auth: { user: { role: string } | null } }>().props;
+    const { auth, active_semester } = usePage<{ auth: { user: { role: string } | null }, active_semester: any }>().props;
     const role = auth?.user?.role ?? 'user';
 
     // ── Menu: semua user ───────────────────────────────────────
@@ -25,6 +29,29 @@ export function AppSidebar() {
             title: 'Dashboard',
             url: '/dashboard',
             icon: LayoutGrid,
+            isActive: true,
+        },
+    ];
+
+    // ── Menu: Data ───────────────────────────────────────────
+    const dataItems: DropdownItem[] = [
+        {
+            title: 'Data',
+            url: '#',
+            icon: Layers,
+            isActive: true,
+            items: [
+                { title: 'Laboratorium', url: '/admin/laboratorium' },
+            ],
+        },
+    ];
+
+    // ── Menu: Jadwal ──────────────────────────────────────────
+    const jadwalItems: DropdownItem[] = [
+        {
+            title: 'Jadwal Praktikum',
+            url: '/jadwal',
+            icon: Calendar,
             isActive: true,
         },
     ];
@@ -87,6 +114,8 @@ export function AppSidebar() {
     // ── Build full nav ─────────────────────────────────────────
     const dropdownNav: DropdownItem[] = [
         ...baseMenuItems,
+        ...((role === 'admin') ? dataItems : []),
+        ...((role === 'admin' || role === 'dosen') ? jadwalItems : []),
         ...(role === 'user' ? oprecItems : []),
         ...(role === 'admin' ? adminItems : []),
         ...((role === 'admin' || role === 'dosen') ? seleksiItems : []),
@@ -108,6 +137,14 @@ export function AppSidebar() {
                                 <AppLogo />
                             </Link>
                         </SidebarMenuButton>
+                        {active_semester && (
+                            <div className="px-3 py-1 flex flex-col gap-0.5 group-data-[collapsible=icon]:hidden">
+                                <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Semester Aktif</span>
+                                <Badge variant="outline" className="w-fit text-[11px] py-0 h-5 border-primary/30 text-primary bg-primary/5">
+                                    {active_semester.nama}
+                                </Badge>
+                            </div>
+                        )}
                     </SidebarMenuItem>
                 </SidebarMenu>
             </SidebarHeader>

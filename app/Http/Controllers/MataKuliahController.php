@@ -37,9 +37,10 @@ class MataKuliahController extends Controller
             'nama' => 'required|string|max:255',
             'sks' => 'required|integer|min:1|max:6',
             'nilai_minimum' => 'nullable|string|in:A,AB,B,BC,C,D,E',
+            'color' => 'nullable|string|max:7',
         ]);
 
-        $mk = MataKuliah::create($request->only(['kode', 'nama', 'sks', 'nilai_minimum']));
+        $mk = MataKuliah::create($request->only(['kode', 'nama', 'sks', 'nilai_minimum', 'color']));
 
         return response()->json(['message' => 'Mata kuliah berhasil ditambahkan', 'data' => $mk->load('kelas')], 201);
     }
@@ -51,9 +52,10 @@ class MataKuliahController extends Controller
             'nama' => 'required|string|max:255',
             'sks' => 'required|integer|min:1|max:6',
             'nilai_minimum' => 'nullable|string|in:A,AB,B,BC,C,D,E',
+            'color' => 'nullable|string|max:7',
         ]);
 
-        $mataKuliah->update($request->only(['kode', 'nama', 'sks', 'nilai_minimum']));
+        $mataKuliah->update($request->only(['kode', 'nama', 'sks', 'nilai_minimum', 'color']));
 
         return response()->json(['message' => 'Mata kuliah berhasil diperbarui', 'data' => $mataKuliah->load('kelas')]);
     }
