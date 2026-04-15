@@ -44,8 +44,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('/events', EventController::class);
 
     // ── Jadwal Praktikum ──────────────────────────────────────
+    Route::apiResource('/jadwal-praktikum', \App\Http\Controllers\JadwalPraktikumController::class)->only(['index', 'show']);
     Route::middleware('role:admin,dosen')->group(function () {
-        Route::apiResource('/jadwal-praktikum', \App\Http\Controllers\JadwalPraktikumController::class);
+        Route::apiResource('/jadwal-praktikum', \App\Http\Controllers\JadwalPraktikumController::class)->except(['index', 'show']);
     });
 
     // ── Applications ──────────────────────────────────────────

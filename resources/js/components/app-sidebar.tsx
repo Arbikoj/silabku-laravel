@@ -115,7 +115,7 @@ export function AppSidebar() {
     const dropdownNav: DropdownItem[] = [
         ...baseMenuItems,
         ...((role === 'admin') ? dataItems : []),
-        ...((role === 'admin' || role === 'dosen') ? jadwalItems : []),
+        ...((role === 'admin' || role === 'dosen' || role === 'user') ? jadwalItems : []),
         ...(role === 'user' ? oprecItems : []),
         ...(role === 'admin' ? adminItems : []),
         ...((role === 'admin' || role === 'dosen') ? seleksiItems : []),

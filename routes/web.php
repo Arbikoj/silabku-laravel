@@ -37,7 +37,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // ── Jadwal Praktikum ──────────────────────────────────────
     Route::get('/jadwal', fn() => Inertia::render('jadwal/page'))
-        ->middleware('role:admin,dosen')
         ->name('jadwal.index');
 
     // ── Seleksi (admin + dosen) ──────────────────────────────

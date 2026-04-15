@@ -313,9 +313,11 @@ export default function JadwalPage() {
                             </SelectContent>
                         </Select>
                         <div className="w-px h-6 bg-border mx-1" />
-                        <Button size="sm" onClick={() => { setEditData(null); setModalOpen(true); }} className="h-8 rounded-lg shadow-sm">
-                            <Plus className="w-4 h-4 mr-1.5" /> Tambah
-                        </Button>
+                        {(auth.user.role === 'admin' || auth.user.role === 'dosen') && (
+                            <Button size="sm" onClick={() => { setEditData(null); setModalOpen(true); }} className="h-8 rounded-lg shadow-sm">
+                                <Plus className="w-4 h-4 mr-1.5" /> Tambah
+                            </Button>
+                        )}
                     </div>
                 </div>
 
@@ -347,9 +349,11 @@ export default function JadwalPage() {
                         <div className="w-3 h-3 rounded-sm bg-primary/20 border border-primary/40" />
                         <span>Terisi (Praktikum)</span>
                     </div>
-                    <div className="ml-auto italic">
-                        * Klik pada kotak jadwal untuk mengubah atau menghapus data.
-                    </div>
+                    {(auth.user.role === 'admin' || auth.user.role === 'dosen') && (
+                        <div className="ml-auto italic">
+                            * Klik pada kotak jadwal untuk mengubah atau menghapus data.
+                        </div>
+                    )}
                 </div>
             </div>
         </AppLayout>
