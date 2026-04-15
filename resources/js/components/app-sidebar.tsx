@@ -14,6 +14,10 @@ import {
     Calendar,
     Building2,
     Layers,
+    CalendarRange,
+    CalendarDays,
+    CalendarRangeIcon,
+    LucideCalendarRange,
 } from 'lucide-react';
 import AppLogo from './app-logo';
 import { NavDropdown } from './nav-dropdown';
@@ -42,6 +46,9 @@ export function AppSidebar() {
             isActive: true,
             items: [
                 { title: 'Laboratorium', url: '/admin/laboratorium' },
+                { title: 'Semester', url: '/admin/semesters' },
+                { title: 'Mata Kuliah', url: '/admin/mata-kuliah' },
+                { title: 'Daftar Kelas', url: '/admin/kelas-list' },
             ],
         },
     ];
@@ -51,7 +58,7 @@ export function AppSidebar() {
         {
             title: 'Jadwal Praktikum',
             url: '/jadwal',
-            icon: Calendar,
+            icon: CalendarDays,
             isActive: true,
         },
     ];
@@ -74,16 +81,10 @@ export function AppSidebar() {
     // ── Menu: admin ───────────────────────────────────────────
     const adminItems: DropdownItem[] = [
         {
-            title: 'Kelola Oprec',
-            url: '#',
-            icon: Bolt,
+            title: 'Events',
+            url: '/admin/events',
+            icon: LucideCalendarRange,
             isActive: true,
-            items: [
-                { title: 'Semester', url: '/admin/semesters' },
-                { title: 'Mata Kuliah', url: '/admin/mata-kuliah' },
-                { title: 'Daftar Kelas', url: '/admin/kelas-list' },
-                { title: 'Event / Periode', url: '/admin/events' },
-            ],
         },
     ];
 
