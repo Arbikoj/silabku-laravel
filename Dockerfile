@@ -46,6 +46,10 @@ RUN docker-php-ext-install \
     mbstring \
     intl
 
+# Increase PHP upload and post limits
+RUN echo "post_max_size = 50M" >> /usr/local/etc/php/conf.d/uploads.ini \
+    && echo "upload_max_filesize = 50M" >> /usr/local/etc/php/conf.d/uploads.ini
+
 # Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 

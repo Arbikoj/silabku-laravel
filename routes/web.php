@@ -39,6 +39,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/jadwal', fn() => Inertia::render('jadwal/page'))
         ->name('jadwal.index');
 
+    // ── Laporan BAP (Asisten) ─────────────────────────────────
+    Route::prefix('bap')->name('bap.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\BapController::class, 'index'])->name('index');
+        Route::post('/store', [\App\Http\Controllers\BapController::class, 'store'])->name('store');
+        Route::post('/generate', [\App\Http\Controllers\BapController::class, 'generate'])->name('generate');
+    });
+
     // ── Seleksi (admin + dosen) ──────────────────────────────
     Route::get('/seleksi', fn() => Inertia::render('admin/applications/page'))
         ->middleware('role:admin,dosen')

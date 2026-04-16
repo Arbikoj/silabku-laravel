@@ -63,6 +63,16 @@ export function AppSidebar() {
         },
     ];
 
+    // ── Menu: Laporan BAP (Asisten) ───────────────────────────
+    const bapItems: DropdownItem[] = [
+        {
+            title: 'Laporan BAP',
+            url: '/bap',
+            icon: ClipboardList,
+            isActive: true,
+        },
+    ];
+
     // ── Menu: mahasiswa (role = user) ─────────────────────────
     const oprecItems: DropdownItem[] = [
         {
@@ -117,6 +127,7 @@ export function AppSidebar() {
         ...baseMenuItems,
         ...((role === 'admin') ? dataItems : []),
         ...((role === 'admin' || role === 'dosen' || role === 'user') ? jadwalItems : []),
+        ...(role === 'user' ? bapItems : []),
         ...(role === 'user' ? oprecItems : []),
         ...(role === 'admin' ? adminItems : []),
         ...((role === 'admin' || role === 'dosen') ? seleksiItems : []),
