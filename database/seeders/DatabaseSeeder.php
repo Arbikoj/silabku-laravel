@@ -18,10 +18,11 @@ class DatabaseSeeder extends Seeder
         if (config('app.seed_dummy_applicants')) {
             $this->call([
                 DummyApplicantSeeder::class,
+                LaboratoriumSeeder::class,
             ]);
             return;
         }
 
-        $this->command?->warn('DummyApplicantSeeder dilewati. Set SEED_DUMMY_APPLICANTS=true di .env untuk mengaktifkannya.');
+        $this->command?->warn('DummyApplicantSeeder & LaboratoriumSeeder dilewati. Set SEED_DUMMY_APPLICANTS=true di .env untuk mengaktifkannya.');
     }
 }
