@@ -13,6 +13,9 @@ class BapPertemuan extends Model
         'pertemuan_ke',
         'tanggal',
         'topik',
+        'status',
+        'jumlah_hadir',
+        'jumlah_tidak_hadir',
         'foto_google_drive_ids',
     ];
 

@@ -5,6 +5,7 @@ namespace App\Services;
 use Google\Client;
 use Google\Service\Drive;
 use Google\Service\Docs;
+use Illuminate\Support\Facades\Log;
 
 class GoogleDocsService
 {
@@ -205,8 +206,12 @@ class GoogleDocsService
             }
 
             if (!empty($imageRequests)) {
-                $batchUpdateRequest = new Docs\BatchUpdateDocumentRequest(['requests' => $imageRequests]);
-                $this->docsService->documents->batchUpdate($documentId, $batchUpdateRequest);
+                try {
+                    $batchUpdateRequest = new Docs\BatchUpdateDocumentRequest(['requests' => $imageRequests]);
+                    $this->docsService->documents->batchUpdate($documentId, $batchUpdateRequest);
+                } catch (\Exception $e) {
+                    Log::warning('Google Docs image insertion failed: ' . $e->getMessage());
+                }
             }
         }
     }

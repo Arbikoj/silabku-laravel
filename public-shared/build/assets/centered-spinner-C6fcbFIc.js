@@ -1,0 +1,1 @@
+import{j as e}from"./app-DWCs_Te3.js";import{a as r}from"./utils-DUb1VT4n.js";import{L as n}from"./loader-circle-6KI_hjHX.js";function o({className:t,iconClassName:s}){return e.jsx("div",{className:r("flex items-center justify-center py-10",t),children:e.jsx(n,{className:r("text-muted-foreground h-8 w-8 animate-spin",s)})})}export{o as C};

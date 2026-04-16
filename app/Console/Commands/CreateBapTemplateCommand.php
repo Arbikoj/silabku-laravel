@@ -68,11 +68,17 @@ class CreateBapTemplateCommand extends Command
             $fullText = "FORMAT BERITA ACARA PRAKTIKUM (BAP)\n\n";
             $fullText .= "Nama Asisten : {{nama}}\n";
             $fullText .= "NIM Asisten  : {{nim}}\n";
-            $fullText .= "Mata Kuliah  : {{mata_kuliah}}\n\n";
+            $fullText .= "Mata Kuliah  : {{mata_kuliah}}\n";
+            $fullText .= "Kelas        : {{kelas}}\n";
+            $fullText .= "Laboratorium : {{lab}}\n";
+            $fullText .= "Waktu        : {{waktu_praktikum}}\n\n";
             
             for ($i = 1; $i <= 10; $i++) {
                 $fullText .= "==================== PERTEMUAN {$i} ====================\n";
                 $fullText .= "Hari/Tanggal : {{tanggal_{$i}}}\n";
+                $fullText .= "Status       : {{status_{$i}}}\n";
+                $fullText .= "Jml. Hadir   : {{hadir_{$i}}} Mahasiswa\n";
+                $fullText .= "Jml. Absen   : {{tidak_hadir_{$i}}} Mahasiswa\n";
                 $fullText .= "Topik / Materi Pembahasan:\n{{topik_{$i}}}\n\n";
                 $fullText .= "Dokumentasi:\n";
                 $fullText .= "{{foto_{$i}_1}}\n";

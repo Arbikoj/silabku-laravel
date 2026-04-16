@@ -23,6 +23,7 @@ class BapController extends Controller
 
         // Cari aplikasi asisten yang Lulus
         $applications = Application::with([
+            'event',
             'applicationMataKuliah.eventMataKuliah.mataKuliah',
             'applicationMataKuliah.eventMataKuliah.kelas'
         ])
@@ -41,11 +42,18 @@ class BapController extends Controller
 
                 $eventMk = $appMk->eventMataKuliah;
                 if ($eventMk) {
+                    $semesterId = $app->event->semester_id ?? null;
+                    
                     // Find actual Jadwal Praktikum
-                    $jadwals = JadwalPraktikum::with(['mataKuliah', 'kelas'])
+                    $query = JadwalPraktikum::with(['mataKuliah', 'kelas', 'laboratorium'])
                         ->where('mata_kuliah_id', $eventMk->mata_kuliah_id)
-                        ->where('kelas_id', $eventMk->kelas_id)
-                        ->get();
+                        ->where('kelas_id', $eventMk->kelas_id);
+                        
+                    if ($semesterId) {
+                        $query->where('semester_id', $semesterId);
+                    }
+                    
+                    $jadwals = $query->get();
                     
                     foreach ($jadwals as $j) {
                         $jadwalPraktikums->push($j);
@@ -54,8 +62,10 @@ class BapController extends Controller
             }
         }
 
-        // Unik jadwal berdasarkan ID
-        $jadwalPraktikums = $jadwalPraktikums->unique('id')->values();
+        // Unik jadwal berdasarkan kombinasi mata_kuliah_id dan kelas_id
+        $jadwalPraktikums = $jadwalPraktikums->unique(function ($item) {
+            return $item->mata_kuliah_id . '-' . $item->kelas_id;
+        })->values();
 
         // Muat data progress BAP yang sudah ada dari ini user
         $jadwalIds = $jadwalPraktikums->pluck('id');
@@ -80,17 +90,31 @@ class BapController extends Controller
             'pertemuan_ke' => 'required|integer|min:1|max:10',
             'tanggal' => 'required|date',
             'topik' => 'required|string',
-            'foto_1' => 'nullable|image',
-            'foto_2' => 'nullable|image',
-            'foto_3' => 'nullable|image',
+            'status' => 'required|in:LURING,DARING',
+            'jumlah_hadir' => 'required|integer|min:0',
+            'jumlah_tidak_hadir' => 'required|integer|min:0',
+            // Only allow JPEG, JPG, PNG. No WebP.
+            'foto_1' => 'nullable|image|mimes:jpeg,jpg,png',
+            'foto_2' => 'nullable|image|mimes:jpeg,jpg,png',
+            'foto_3' => 'nullable|image|mimes:jpeg,jpg,png',
         ]);
 
         $user = $request->user();
         $jadwal = JadwalPraktikum::with(['mataKuliah', 'semester'])->findOrFail($request->jadwal_praktikum_id);
 
-        $fotoIds = [];
         $semesterName = $jadwal->semester ? $jadwal->semester->nama : 'Semester';
         $mkName = $jadwal->mataKuliah ? $jadwal->mataKuliah->nama : 'MK';
+        
+        $existingBap = BapPertemuan::where([
+            'jadwal_praktikum_id' => $jadwal->id,
+            'user_id' => $user->id,
+            'pertemuan_ke' => $request->pertemuan_ke,
+        ])->first();
+
+        $fotoIds = [];
+        if ($existingBap) {
+            $fotoIds = is_array($existingBap->foto_google_drive_ids) ? $existingBap->foto_google_drive_ids : (json_decode($existingBap->foto_google_drive_ids, true) ?? []);
+        }
         
         // Folder Structure: Asisten/{Semester}/BAP/{MataKuliah}/{NIM-Nama}
         // Pastikan konfigurasi driver `google` di filesystems.php siap
@@ -100,12 +124,32 @@ class BapController extends Controller
         for ($i = 1; $i <= 3; $i++) {
             $key = "foto_$i";
             if ($request->hasFile($key)) {
-                $file = $request->file($key);
-                $path = Storage::disk('google')->put($folderPath, $file);
+                // Hapus foto lama di Google Drive jika ada sebelum ditimpa
+                if (isset($fotoIds["foto_{$i}"])) {
+                    $oldPath = $fotoIds["foto_{$i}"]['path'];
+                    try {
+                        Storage::disk('google')->delete($oldPath);
+                    } catch (\Exception $e) {
+                        Log::warning("Gagal hapus foto lama: " . $oldPath);
+                    }
+                }
                 
+                $file = $request->file($key);
+                // Build filename per requirement: pertemuan-{pertemuan_ke}-foto{i}.ext
+                $extension = $file->getClientOriginalExtension();
+                $newFileName = "pertemuan-{$request->pertemuan_ke}-foto{$i}.{$extension}";
+                $path = Storage::disk('google')->putFileAs($folderPath, $file, $newFileName);
+
+                // Set public immediately after upload
+                try {
+                    Storage::disk('google')->setVisibility($path, 'public');
+                } catch (\Exception $e) {
+                    Log::warning("Gagal set public saat upload foto: " . $path);
+                }
+
                 $fotoIds["foto_{$i}"] = [
                     'path' => $path,
-                    'id' => $path // Kita simpan $path sebagai reference (sudah didukung otomatis oleh flysystem)
+                    'id' => $path,
                 ];
             }
         }
@@ -120,6 +164,9 @@ class BapController extends Controller
             [
                 'tanggal' => Carbon::parse($request->tanggal),
                 'topik' => $request->topik,
+                'status' => $request->status,
+                'jumlah_hadir' => $request->jumlah_hadir,
+                'jumlah_tidak_hadir' => $request->jumlah_tidak_hadir,
                 'foto_google_drive_ids' => json_encode($fotoIds),
             ]
         );
@@ -140,7 +187,7 @@ class BapController extends Controller
 
         $user = $request->user();
         Log::info("Mulai generate BAP untuk asisten: {$user->name}, jadwal_id: {$request->jadwal_praktikum_id}");
-        $jadwal = JadwalPraktikum::with(['mataKuliah'])->findOrFail($request->jadwal_praktikum_id);
+        $jadwal = JadwalPraktikum::with(['mataKuliah', 'kelas', 'laboratorium'])->findOrFail($request->jadwal_praktikum_id);
 
         // Ambil data BAP dari pertemuan 1 sampai 10
         $pertemuans = BapPertemuan::where('jadwal_praktikum_id', $jadwal->id)
@@ -167,7 +214,7 @@ class BapController extends Controller
             Log::info("Template berhasil diduplikasi: {$newDocumentId}");
 
             // 1.5 Pindahkan dokumen ke folder secara hierarki
-            $folderHierarchy = ['Asisten', $semesterName, 'BAP', $jadwal->mataKuliah->nama];
+            $folderHierarchy = ['Asisten', $semesterName, 'BAP', $jadwal->mataKuliah->nama, "{$user->nim}-{$user->name}"];
             Log::info("Memindahkan file BAP ke direktori spesifik...");
             $docsService->moveToFolderHierarchy($newDocumentId, $folderHierarchy);
 
@@ -176,6 +223,9 @@ class BapController extends Controller
                 '{{nama}}' => $user->name,
                 '{{nim}}' => $user->nim ?? '-',
                 '{{mata_kuliah}}' => $jadwal->mataKuliah->nama,
+                '{{kelas}}' => $jadwal->kelas ? $jadwal->kelas->nama : '-',
+                '{{waktu_praktikum}}' => ($jadwal->jam_mulai ? substr($jadwal->jam_mulai, 0, 5) : '') . ' - ' . ($jadwal->jam_selesai ? substr($jadwal->jam_selesai, 0, 5) : ''),
+                '{{lab}}' => $jadwal->laboratorium ? $jadwal->laboratorium->nama : '-',
             ];
             
             $imageReplacements = [];
@@ -185,8 +235,11 @@ class BapController extends Controller
                 $p = $pertemuans->get($i);
 
                 if ($p) {
-                    $textReplacements["{{tanggal_{$i}}}"] = $p->tanggal->translatedFormat('l, d F Y');
+                    $textReplacements["{{tanggal_{$i}}}"] = $p->tanggal->locale('id')->isoFormat('dddd, D MMMM YYYY');
                     $textReplacements["{{topik_{$i}}}"] = $p->topik;
+                    $textReplacements["{{status_{$i}}}"] = $p->status ?? '-';
+                    $textReplacements["{{hadir_{$i}}}"] = $p->jumlah_hadir ?? '-';
+                    $textReplacements["{{tidak_hadir_{$i}}}"] = $p->jumlah_tidak_hadir ?? '-';
 
                     // Images logic.
                     // Kini kita manfaatkan fitur native publish dari flysystem google drive
@@ -200,8 +253,24 @@ class BapController extends Controller
                         if (is_array($fotoData) && isset($fotoData["foto_{$k}"])) {
                             $path = $fotoData["foto_{$k}"]['path'];
                             
-                            // Storage::url() otomatis melakukan 'publish' dan mereturn public link di masbug plugin!
-                            $publicUrl = Storage::disk('google')->url($path);
+                            // Kita dapatkan URL preview dari flysystem
+                            $previewUrl = Storage::disk('google')->url($path);
+                            
+                            // Ekstrak ID Google Drive asli dari URL preview (karena path sekarang berisi ekstensi file hasil rename)
+                            $fileId = '';
+                            if (preg_match('/\/d\/([a-zA-Z0-9_-]+)/', $previewUrl, $matches)) {
+                                $fileId = $matches[1];
+                            } elseif (preg_match('/id=([a-zA-Z0-9_-]+)/', $previewUrl, $matches)) {
+                                $fileId = $matches[1];
+                            } else {
+                                // Fallback jika regex gagal, tapi sangat jarang terjadi
+                                $pathParts = explode('/', $path);
+                                $fileId = end($pathParts);
+                            }
+                            
+                            // Gunakan URL format Google Drive yang bisa langsung diakses secara binary oleh Docs API
+                            $publicUrl = "https://drive.google.com/uc?export=download&id={$fileId}";
+                            Log::info("Foto URL untuk Docs [{$i}][{$k}]: {$publicUrl}");
                             $imageReplacements[$fotoToken] = $publicUrl;
                         } else {
                             $imageReplacements[$fotoToken] = ""; // Hapus token jika kosong
@@ -210,6 +279,9 @@ class BapController extends Controller
                 } else {
                     $textReplacements["{{tanggal_{$i}}}"] = '-';
                     $textReplacements["{{topik_{$i}}}"] = '-';
+                    $textReplacements["{{status_{$i}}}"] = '-';
+                    $textReplacements["{{hadir_{$i}}}"] = '-';
+                    $textReplacements["{{tidak_hadir_{$i}}}"] = '-';
                     $imageReplacements["{{foto_{$i}_1}}"] = "";
                     $imageReplacements["{{foto_{$i}_2}}"] = "";
                     $imageReplacements["{{foto_{$i}_3}}"] = "";

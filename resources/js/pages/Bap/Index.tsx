@@ -56,6 +56,9 @@ export default function BapIndex({ jadwalPraktikums, bapProgress }: BapPageProps
             pertemuan_ke: pertemuanKe,
             tanggal: existingData?.tanggal ? existingData.tanggal.split('T')[0] : defaultDate,
             topik: existingData?.topik || '',
+            status: existingData?.status || 'LURING',
+            jumlah_hadir: existingData?.jumlah_hadir ?? '',
+            jumlah_tidak_hadir: existingData?.jumlah_tidak_hadir ?? '',
             foto_1: null as File | null,
             foto_2: null as File | null,
             foto_3: null as File | null,
@@ -92,6 +95,45 @@ export default function BapIndex({ jadwalPraktikums, bapProgress }: BapPageProps
                             className="bg-white"
                         />
                         {errors.tanggal && <p className="text-red-500 text-xs">{errors.tanggal}</p>}
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label>Status</Label>
+                        <select 
+                            value={data.status} 
+                            onChange={e => setData('status', e.target.value)}
+                            className="flex h-10 w-full rounded-md border border-input bg-white px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                            <option value="LURING">Luring</option>
+                            <option value="DARING">Daring</option>
+                        </select>
+                        {errors.status && <p className="text-red-500 text-xs">{errors.status}</p>}
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label>Jumlah Hadir</Label>
+                        <Input 
+                            type="number" 
+                            min="0"
+                            value={data.jumlah_hadir} 
+                            onChange={e => setData('jumlah_hadir', e.target.value)} 
+                            className="bg-white"
+                            placeholder="Contoh: 30"
+                        />
+                        {errors.jumlah_hadir && <p className="text-red-500 text-xs">{errors.jumlah_hadir}</p>}
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label>Jumlah Tidak Hadir</Label>
+                        <Input 
+                            type="number" 
+                            min="0"
+                            value={data.jumlah_tidak_hadir} 
+                            onChange={e => setData('jumlah_tidak_hadir', e.target.value)} 
+                            className="bg-white"
+                            placeholder="Contoh: 2"
+                        />
+                        {errors.jumlah_tidak_hadir && <p className="text-red-500 text-xs">{errors.jumlah_tidak_hadir}</p>}
                     </div>
 
                     <div className="space-y-2 md:col-span-2">
@@ -201,7 +243,9 @@ export default function BapIndex({ jadwalPraktikums, bapProgress }: BapPageProps
                                                 {jadwal.mata_kuliah?.nama}
                                             </CardTitle>
                                             <CardDescription className="text-sm mt-1">
-                                                Kelas {jadwal.kelas?.nama} • {jadwal.hari}, {jadwal.jam_mulai} - {jadwal.jam_selesai}
+                                                Kelas {jadwal.kelas?.nama} • {jadwal.hari}, {jadwal.jam_mulai ? jadwal.jam_mulai.substring(0,5) : ''} - {jadwal.jam_selesai ? jadwal.jam_selesai.substring(0,5) : ''}
+                                                <br/>
+                                                <span className="text-indigo-600/80 font-medium pt-1 inline-block">Lab: {jadwal.laboratorium?.nama ?? '-'}</span>
                                             </CardDescription>
                                         </div>
                                         <div className="flex flex-col items-end gap-2">
