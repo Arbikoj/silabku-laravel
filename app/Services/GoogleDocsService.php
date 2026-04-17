@@ -67,13 +67,10 @@ class GoogleDocsService
     /**
      * Pindahkan dokumen ke struktur folder yang dinamis (buat jika belum ada)
      */
-    public function moveToFolderHierarchy($documentId, array $folderNames)
+    public function ensureFolderHierarchyAndGetId(array $folderNames, $startParentId = 'root')
     {
-        $currentParentId = 'root'; // Mulai pencarian dari root ('root' alias di google drive)
+        $currentParentId = $startParentId; // Mulai pencarian dari parent (root alias di google drive atau yang diberikan)
         
-        // Aturan: kalau kita ingin root Google Drive beneran tanpa alias, biarkan default,
-        // tapi search query di Drive menganggap parent 'root' jika tidak dispesifikasi.
-        // Kita akan menelusuri atau buat per level
         foreach ($folderNames as $folderName) {
             $folderNameClean = str_replace("'", "\'", $folderName);
             $query = "mimeType = 'application/vnd.google-apps.folder' and name = '{$folderNameClean}' and '{$currentParentId}' in parents and trashed = false";
@@ -101,6 +98,13 @@ class GoogleDocsService
             }
         }
 
+        return $currentParentId;
+    }
+
+    public function moveToFolderHierarchy($documentId, array $folderNames, $startParentId = 'root')
+    {
+        $currentParentId = $this->ensureFolderHierarchyAndGetId($folderNames, $startParentId);
+
         // currentParentId sekarang berisi ID folder terdalam. Pindahkan file Doc ke sana.
         $file = $this->driveService->files->get($documentId, ['fields' => 'parents']);
         $previousParents = join(',', $file->parents);
@@ -111,6 +115,29 @@ class GoogleDocsService
             'removeParents' => $previousParents,
             'fields' => 'id, parents'
         ]);
+    }
+
+    public function uploadFileToFolder($fileRealPath, $fileName, $mimeType, $folderId)
+    {
+        $fileMetadata = new Drive\DriveFile([
+            'name' => $fileName,
+            'parents' => [$folderId]
+        ]);
+        
+        $content = file_get_contents($fileRealPath);
+        $file = $this->driveService->files->create($fileMetadata, [
+            'data' => $content,
+            'mimeType' => $mimeType,
+            'uploadType' => 'multipart',
+            'fields' => 'id'
+        ]);
+        
+        return $file->id;
+    }
+
+    public function getDriveService()
+    {
+        return $this->driveService;
     }
 
     /**

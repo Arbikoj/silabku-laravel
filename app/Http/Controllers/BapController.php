@@ -83,7 +83,7 @@ class BapController extends Controller
     /**
      * Store data and upload files to Google Drive
      */
-    public function store(Request $request)
+    public function store(Request $request, GoogleDocsService $docsService)
     {
         $request->validate([
             'jadwal_praktikum_id' => 'required|exists:jadwal_praktikums,id',
@@ -116,33 +116,59 @@ class BapController extends Controller
             $fotoIds = is_array($existingBap->foto_google_drive_ids) ? $existingBap->foto_google_drive_ids : (json_decode($existingBap->foto_google_drive_ids, true) ?? []);
         }
         
-        // Folder Structure: Asisten/{Semester}/BAP/{MataKuliah}/{NIM-Nama}
-        // Pastikan konfigurasi driver `google` di filesystems.php siap
-        $folderPath = "Asisten/{$semesterName}/BAP/{$mkName}/{$user->nim}-{$user->name}";
+        $folderHierarchy = ['Asisten', $semesterName, 'BAP', $mkName, 'Foto', "{$user->nim}-{$user->name}"];
+        
+        $rootFolderCfg = config('filesystems.disks.google.folderId', env('GOOGLE_DRIVE_FOLDER_ID', 'root'));
+        if ($rootFolderCfg && $rootFolderCfg !== 'root') {
+            if (strlen($rootFolderCfg) < 20) {
+                // Ini nama folder, bukan ID Google Drive, jadikan awalan struktur folder
+                array_unshift($folderHierarchy, $rootFolderCfg);
+                $rootFolderId = 'root';
+            } else {
+                $rootFolderId = $rootFolderCfg;
+            }
+        } else {
+            $rootFolderId = 'root';
+        }
+
+        $targetFolderId = null;
         
         // Simpan setiap foto yang diupload ke GDrive
         for ($i = 1; $i <= 3; $i++) {
             $key = "foto_$i";
             if ($request->hasFile($key)) {
+                if (!$targetFolderId) {
+                    $targetFolderId = $docsService->ensureFolderHierarchyAndGetId($folderHierarchy, $rootFolderId);
+                }
+
                 // Hapus foto lama di Google Drive jika ada sebelum ditimpa
                 if (isset($fotoIds["foto_{$i}"])) {
                     $oldPath = $fotoIds["foto_{$i}"]['path'];
                     try {
-                        Storage::disk('google')->delete($oldPath);
+                        if (strpos($oldPath, '/') === false && strlen($oldPath) > 20) {
+                            $docsService->getDriveService()->files->delete($oldPath);
+                        } else {
+                            Storage::disk('google')->delete($oldPath);
+                        }
                     } catch (\Exception $e) {
                         Log::warning("Gagal hapus foto lama: " . $oldPath);
                     }
                 }
                 
                 $file = $request->file($key);
-                // Build filename per requirement: pertemuan-{pertemuan_ke}-foto{i}.ext
                 $extension = $file->getClientOriginalExtension();
                 $newFileName = "pertemuan-{$request->pertemuan_ke}-foto{$i}.{$extension}";
-                $path = Storage::disk('google')->putFileAs($folderPath, $file, $newFileName);
+                
+                // Upload secara manual pake API
+                $path = $docsService->uploadFileToFolder($file->getRealPath(), $newFileName, $file->getMimeType(), $targetFolderId);
 
                 // Set public immediately after upload
                 try {
-                    Storage::disk('google')->setVisibility($path, 'public');
+                    $permission = new \Google\Service\Drive\Permission([
+                        'type' => 'anyone',
+                        'role' => 'reader',
+                    ]);
+                    $docsService->getDriveService()->permissions->create($path, $permission);
                 } catch (\Exception $e) {
                     Log::warning("Gagal set public saat upload foto: " . $path);
                 }
@@ -213,10 +239,23 @@ class BapController extends Controller
             $newDocumentId = $docsService->duplicateTemplate($templateId, $docTitle);
             Log::info("Template berhasil diduplikasi: {$newDocumentId}");
 
-            // 1.5 Pindahkan dokumen ke folder secara hierarki
-            $folderHierarchy = ['Asisten', $semesterName, 'BAP', $jadwal->mataKuliah->nama, "{$user->nim}-{$user->name}"];
+            // 1.5 Pindahkan dokumen BAP ke folder secara hierarki
+            $folderHierarchy = ['Asisten', $semesterName, 'BAP', $jadwal->mataKuliah->nama];
+            
+            $rootFolderCfg = config('filesystems.disks.google.folderId', env('GOOGLE_DRIVE_FOLDER_ID', 'root'));
+            if ($rootFolderCfg && $rootFolderCfg !== 'root') {
+                if (strlen($rootFolderCfg) < 20) {
+                    array_unshift($folderHierarchy, $rootFolderCfg);
+                    $rootFolderId = 'root';
+                } else {
+                    $rootFolderId = $rootFolderCfg;
+                }
+            } else {
+                $rootFolderId = 'root';
+            }
+
             Log::info("Memindahkan file BAP ke direktori spesifik...");
-            $docsService->moveToFolderHierarchy($newDocumentId, $folderHierarchy);
+            $docsService->moveToFolderHierarchy($newDocumentId, $folderHierarchy, $rootFolderId);
 
             // 2. Siapkan Replacements Text & Images
             $textReplacements = [
@@ -253,19 +292,24 @@ class BapController extends Controller
                         if (is_array($fotoData) && isset($fotoData["foto_{$k}"])) {
                             $path = $fotoData["foto_{$k}"]['path'];
                             
-                            // Kita dapatkan URL preview dari flysystem
-                            $previewUrl = Storage::disk('google')->url($path);
-                            
-                            // Ekstrak ID Google Drive asli dari URL preview (karena path sekarang berisi ekstensi file hasil rename)
                             $fileId = '';
-                            if (preg_match('/\/d\/([a-zA-Z0-9_-]+)/', $previewUrl, $matches)) {
-                                $fileId = $matches[1];
-                            } elseif (preg_match('/id=([a-zA-Z0-9_-]+)/', $previewUrl, $matches)) {
-                                $fileId = $matches[1];
+                            if (strpos($path, '/') === false && strlen($path) > 20) {
+                                // Menggunakan file ID langsung
+                                $fileId = $path;
                             } else {
-                                // Fallback jika regex gagal, tapi sangat jarang terjadi
-                                $pathParts = explode('/', $path);
-                                $fileId = end($pathParts);
+                                // Kita dapatkan URL preview dari flysystem
+                                $previewUrl = Storage::disk('google')->url($path);
+                                
+                                // Ekstrak ID Google Drive asli dari URL preview
+                                if (preg_match('/\/d\/([a-zA-Z0-9_-]+)/', $previewUrl, $matches)) {
+                                    $fileId = $matches[1];
+                                } elseif (preg_match('/id=([a-zA-Z0-9_-]+)/', $previewUrl, $matches)) {
+                                    $fileId = $matches[1];
+                                } else {
+                                    // Fallback jika regex gagal, tapi sangat jarang terjadi
+                                    $pathParts = explode('/', $path);
+                                    $fileId = end($pathParts);
+                                }
                             }
                             
                             // Gunakan URL format Google Drive yang bisa langsung diakses secara binary oleh Docs API
@@ -302,7 +346,12 @@ class BapController extends Controller
                 if (is_array($fotoData)) {
                     for ($k = 1; $k <= 3; $k++) {
                          if (isset($fotoData["foto_{$k}"])) {
-                             Storage::disk('google')->setVisibility($fotoData["foto_{$k}"]['path'], 'private');
+                             $path = $fotoData["foto_{$k}"]['path'];
+                             if (strpos($path, '/') !== false || strlen($path) <= 20) {
+                                 try {
+                                     Storage::disk('google')->setVisibility($path, 'private');
+                                 } catch (\Exception $e) {}
+                             }
                          }
                     }
                 }
