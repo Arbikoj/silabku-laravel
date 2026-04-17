@@ -118,7 +118,7 @@ class BapController extends Controller
         
         $folderHierarchy = ['Asisten', $semesterName, 'BAP', $mkName, 'Foto', "{$user->nim}-{$user->name}"];
         
-        $rootFolderCfg = config('filesystems.disks.google.folderId', env('GOOGLE_DRIVE_FOLDER_ID', 'root'));
+        $rootFolderCfg = config('filesystems.disks.google.folderId', env('GOOGLE_DRIVE_FOLDER', 'root'));
         if ($rootFolderCfg && $rootFolderCfg !== 'root') {
             if (strlen($rootFolderCfg) < 20) {
                 // Ini nama folder, bukan ID Google Drive, jadikan awalan struktur folder
@@ -188,7 +188,7 @@ class BapController extends Controller
                 'pertemuan_ke' => $request->pertemuan_ke,
             ],
             [
-                'tanggal' => Carbon::parse($request->tanggal),
+                'tanggal' => Carbon::parse($request->tanggal)->setTimezone('Asia/Jakarta'),
                 'topik' => $request->topik,
                 'status' => $request->status,
                 'jumlah_hadir' => $request->jumlah_hadir,
@@ -242,7 +242,7 @@ class BapController extends Controller
             // 1.5 Pindahkan dokumen BAP ke folder secara hierarki
             $folderHierarchy = ['Asisten', $semesterName, 'BAP', $jadwal->mataKuliah->nama];
             
-            $rootFolderCfg = config('filesystems.disks.google.folderId', env('GOOGLE_DRIVE_FOLDER_ID', 'root'));
+            $rootFolderCfg = config('filesystems.disks.google.folderId', env('GOOGLE_DRIVE_FOLDER', 'root'));
             if ($rootFolderCfg && $rootFolderCfg !== 'root') {
                 if (strlen($rootFolderCfg) < 20) {
                     array_unshift($folderHierarchy, $rootFolderCfg);
@@ -274,7 +274,7 @@ class BapController extends Controller
                 $p = $pertemuans->get($i);
 
                 if ($p) {
-                    $textReplacements["{{tanggal_{$i}}}"] = $p->tanggal->locale('id')->isoFormat('dddd, D MMMM YYYY');
+                    $textReplacements["{{tanggal_{$i}}}"] = Carbon::parse($p->tanggal)->setTimezone('Asia/Jakarta')->locale('id')->isoFormat('dddd, D MMMM YYYY');
                     $textReplacements["{{topik_{$i}}}"] = $p->topik;
                     $textReplacements["{{status_{$i}}}"] = $p->status ?? '-';
                     $textReplacements["{{hadir_{$i}}}"] = $p->jumlah_hadir ?? '-';

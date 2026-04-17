@@ -106,8 +106,8 @@ class CreateBapTemplateCommand extends Command
 
             $docsService->documents->batchUpdate($documentId, $batchUpdateRequest);
 
-            // Now, optionally move it to a specific folder if GOOGLE_DRIVE_FOLDER_ID is set (or if it's a folder name)
-            $folderNameOrId = env('GOOGLE_DRIVE_FOLDER_ID');
+            // Now, optionally move it to a specific folder if GOOGLE_DRIVE_FOLDER is set (or if it's a folder name)
+            $folderNameOrId = env('GOOGLE_DRIVE_FOLDER');
             if ($folderNameOrId) {
                 // Determine if it's a folder name or ID
                 $folderId = $folderNameOrId;
