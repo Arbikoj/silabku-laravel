@@ -16,16 +16,16 @@ import { toast } from 'sonner';
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Admin', href: '#' }, { title: 'Mata Kuliah', href: '/admin/mata-kuliah' }];
 
-interface MataKuliah { id: number; kode: string; nama: string; sks: number; nilai_minimum: string | null; color: string | null; kelas: any[]; }
+interface MataKuliah { id: number; kode: string; nama: string; sks: number; pertemuan_praktikum: number; nilai_minimum: string | null; color: string | null; kelas: any[]; }
 
 function MKModal({ open, onClose, onSaved, initial }: {
     open: boolean; onClose: () => void; onSaved: () => void; initial?: MataKuliah;
 }) {
-    const [form, setForm] = useState({ kode: '', nama: '', sks: 2, nilai_minimum: '', color: PASTEL_PALETTE[0] });
+    const [form, setForm] = useState({ kode: '', nama: '', sks: 2, pertemuan_praktikum: 10, nilai_minimum: '', color: PASTEL_PALETTE[0] });
 
     useEffect(() => {
-        if (initial) setForm({ kode: initial.kode, nama: initial.nama, sks: initial.sks, nilai_minimum: initial.nilai_minimum || '', color: initial.color || PASTEL_PALETTE[0] });
-        else setForm({ kode: '', nama: '', sks: 2, nilai_minimum: '', color: PASTEL_PALETTE[0] });
+        if (initial) setForm({ kode: initial.kode, nama: initial.nama, sks: initial.sks, pertemuan_praktikum: initial.pertemuan_praktikum, nilai_minimum: initial.nilai_minimum || '', color: initial.color || PASTEL_PALETTE[0] });
+        else setForm({ kode: '', nama: '', sks: 2, pertemuan_praktikum: 10, nilai_minimum: '', color: PASTEL_PALETTE[0] });
     }, [initial, open]);
 
     const submit = async () => {
@@ -44,14 +44,18 @@ function MKModal({ open, onClose, onSaved, initial }: {
             <DialogContent>
                 <DialogHeader><DialogTitle>{initial ? 'Edit Mata Kuliah' : 'Tambah Mata Kuliah'}</DialogTitle></DialogHeader>
                 <div className="grid gap-4 py-2">
-                    <div className="grid grid-cols-2 gap-3">
-                        <div className="grid gap-1">
+                    <div className="grid grid-cols-3 gap-3">
+                        <div className="grid gap-1 col-span-1">
                             <Label>Kode</Label>
                             <Input value={form.kode} onChange={e => setForm(f => ({ ...f, kode: e.target.value }))} placeholder="MK001" />
                         </div>
-                        <div className="grid gap-1">
+                        <div className="grid gap-1 col-span-1">
                             <Label>SKS</Label>
                             <Input type="number" min={1} max={6} value={form.sks} onChange={e => setForm(f => ({ ...f, sks: Number(e.target.value) }))} />
+                        </div>
+                        <div className="grid gap-1 col-span-1">
+                            <Label>Pertemuan</Label>
+                            <Input type="number" min={1} max={30} value={form.pertemuan_praktikum} onChange={e => setForm(f => ({ ...f, pertemuan_praktikum: Number(e.target.value) }))} />
                         </div>
                     </div>
                     <div className="grid gap-1">
@@ -144,9 +148,10 @@ export default function MataKuliahPage() {
                     <table className="w-full text-sm">
                         <thead className="bg-muted">
                             <tr>
-                                <th className="px-4 py-3 text-left">Kode</th>
+                                 <th className="px-4 py-3 text-left">Kode</th>
                                 <th className="px-4 py-3 text-left">Nama</th>
                                 <th className="px-4 py-3 text-left">SKS</th>
+                                <th className="px-4 py-3 text-left">Pertemuan</th>
                                 <th className="px-4 py-3 text-left">Min. IPK</th>
                                 <th className="px-4 py-3 text-left">Kelas</th>
                                 <th className="px-4 py-3 text-right">Aksi</th>
@@ -161,9 +166,10 @@ export default function MataKuliahPage() {
                                 </tr>
                             ) : data.map(mk => (
                                 <tr key={mk.id} className="border-t hover:bg-muted/30">
-                                    <td className="px-4 py-3 font-mono">{mk.kode}</td>
+                                     <td className="px-4 py-3 font-mono">{mk.kode}</td>
                                     <td className="px-4 py-3 font-medium">{mk.nama}</td>
                                     <td className="px-4 py-3">{mk.sks} SKS</td>
+                                    <td className="px-4 py-3">{mk.pertemuan_praktikum} Pertemuan</td>
                                     <td className="px-4 py-3">
                                         {mk.nilai_minimum
                                             ? <Badge variant="outline">&ge; {mk.nilai_minimum}</Badge>

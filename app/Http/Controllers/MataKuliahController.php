@@ -36,11 +36,12 @@ class MataKuliahController extends Controller
             'kode' => 'required|string|max:20|unique:mata_kuliah,kode',
             'nama' => 'required|string|max:255',
             'sks' => 'required|integer|min:1|max:6',
+            'pertemuan_praktikum' => 'required|integer|min:1|max:30',
             'nilai_minimum' => 'nullable|string|in:A,AB,B,BC,C,D,E',
             'color' => 'nullable|string|max:7',
         ]);
 
-        $mk = MataKuliah::create($request->only(['kode', 'nama', 'sks', 'nilai_minimum', 'color']));
+        $mk = MataKuliah::create($request->only(['kode', 'nama', 'sks', 'pertemuan_praktikum', 'nilai_minimum', 'color']));
 
         return response()->json(['message' => 'Mata kuliah berhasil ditambahkan', 'data' => $mk->load('kelas')], 201);
     }
@@ -51,11 +52,12 @@ class MataKuliahController extends Controller
             'kode' => 'required|string|max:20|unique:mata_kuliah,kode,' . $mataKuliah->id,
             'nama' => 'required|string|max:255',
             'sks' => 'required|integer|min:1|max:6',
+            'pertemuan_praktikum' => 'required|integer|min:1|max:30',
             'nilai_minimum' => 'nullable|string|in:A,AB,B,BC,C,D,E',
             'color' => 'nullable|string|max:7',
         ]);
 
-        $mataKuliah->update($request->only(['kode', 'nama', 'sks', 'nilai_minimum', 'color']));
+        $mataKuliah->update($request->only(['kode', 'nama', 'sks', 'pertemuan_praktikum', 'nilai_minimum', 'color']));
 
         return response()->json(['message' => 'Mata kuliah berhasil diperbarui', 'data' => $mataKuliah->load('kelas')]);
     }

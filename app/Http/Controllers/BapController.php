@@ -87,7 +87,7 @@ class BapController extends Controller
     {
         $request->validate([
             'jadwal_praktikum_id' => 'required|exists:jadwal_praktikums,id',
-            'pertemuan_ke' => 'required|integer|min:1|max:10',
+            'pertemuan_ke' => 'required|integer|min:1|max:30',
             'tanggal' => 'required|date',
             'topik' => 'required|string',
             'status' => 'required|in:LURING,DARING',
@@ -102,6 +102,11 @@ class BapController extends Controller
 
         $user = $request->user();
         $jadwal = JadwalPraktikum::with(['mataKuliah', 'semester'])->findOrFail($request->jadwal_praktikum_id);
+        
+        $maxPertemuan = $jadwal->mataKuliah->pertemuan_praktikum ?? 10;
+        if ($request->pertemuan_ke > $maxPertemuan) {
+            return redirect()->back()->with('error', "Pertemuan tidak boleh lebih dari $maxPertemuan.");
+        }
 
         $semesterName = $jadwal->semester ? $jadwal->semester->nama : 'Semester';
         $mkName = $jadwal->mataKuliah ? $jadwal->mataKuliah->nama : 'MK';
@@ -203,7 +208,7 @@ class BapController extends Controller
     }
 
     /**
-     * Generate Google Docs BAP for 10 Pertemuan
+     * Generate Google Docs BAP for all meetings
      */
     public function generate(Request $request, GoogleDocsService $docsService)
     {
@@ -217,7 +222,7 @@ class BapController extends Controller
         Log::info("Mulai generate BAP untuk asisten: {$user->name}, jadwal_id: {$request->jadwal_praktikum_id}");
         $jadwal = JadwalPraktikum::with(['mataKuliah', 'kelas', 'laboratorium'])->findOrFail($request->jadwal_praktikum_id);
 
-        // Ambil data BAP dari pertemuan 1 sampai 10
+        // Ambil data BAP dari semua pertemuan yang sudah diisi
         $pertemuans = BapPertemuan::where('jadwal_praktikum_id', $jadwal->id)
             ->where('user_id', $user->id)
             ->orderBy('pertemuan_ke', 'asc')

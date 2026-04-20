@@ -8,7 +8,7 @@ class MataKuliah extends Model
 {
     protected $table = 'mata_kuliah';
 
-    protected $fillable = ['kode', 'nama', 'sks', 'nilai_minimum', 'color'];
+    protected $fillable = ['kode', 'nama', 'sks', 'pertemuan_praktikum', 'nilai_minimum', 'color'];
 
     public function kelas()
     {

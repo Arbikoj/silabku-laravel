@@ -78,19 +78,19 @@ class RecruitmentSeeder extends Seeder
 
         $mataKuliahDasar = MataKuliah::updateOrCreate(
             ['kode' => 'IF101'],
-            ['nama' => 'Dasar Pemrograman', 'sks' => 3, 'nilai_minimum' => 'B']
+            ['nama' => 'Dasar Pemrograman', 'sks' => 3, 'pertemuan_praktikum' => 12, 'nilai_minimum' => 'B']
         );
         $mataKuliahStruktur = MataKuliah::updateOrCreate(
             ['kode' => 'IF202'],
-            ['nama' => 'Struktur Data', 'sks' => 3, 'nilai_minimum' => 'B']
+            ['nama' => 'Struktur Data', 'sks' => 3, 'pertemuan_praktikum' => 10, 'nilai_minimum' => 'B']
         );
         $mataKuliahBasisData = MataKuliah::updateOrCreate(
             ['kode' => 'IF303'],
-            ['nama' => 'Basis Data', 'sks' => 4, 'nilai_minimum' => 'BC']
+            ['nama' => 'Basis Data', 'sks' => 4, 'pertemuan_praktikum' => 14, 'nilai_minimum' => 'BC']
         );
         $mataKuliahJarkom = MataKuliah::updateOrCreate(
             ['kode' => 'IF404'],
-            ['nama' => 'Jaringan Komputer', 'sks' => 3, 'nilai_minimum' => 'C']
+            ['nama' => 'Jaringan Komputer', 'sks' => 3, 'pertemuan_praktikum' => 10, 'nilai_minimum' => 'C']
         );
 
         $kelasConfigs = [

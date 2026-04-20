@@ -294,7 +294,7 @@ export default function BapIndex({ jadwalPraktikums, bapProgress }: BapPageProps
                                         </div>
                                         <div className="flex flex-col items-end gap-2">
                                             <div className="text-sm font-medium bg-white px-3 py-1 rounded-full border shadow-sm">
-                                                Progress: <span className={completedCount === 10 ? 'text-emerald-600' : 'text-blue-600'}>{completedCount}/10</span>
+                                                Progress: <span className={completedCount === (jadwal.mata_kuliah?.pertemuan_praktikum || 10) ? 'text-emerald-600' : 'text-blue-600'}>{completedCount}/{(jadwal.mata_kuliah?.pertemuan_praktikum || 10)}</span>
                                             </div>
                                             <Button 
                                                 onClick={handleGenerate} 
@@ -309,7 +309,7 @@ export default function BapIndex({ jadwalPraktikums, bapProgress }: BapPageProps
                                 </CardHeader>
                                 <CardContent className="p-4 sm:p-6 bg-slate-50/50">
                                     <div className="w-full space-y-2">
-                                        {Array.from({ length: 10 }).map((_, idx) => {
+                                        {Array.from({ length: (jadwal.mata_kuliah?.pertemuan_praktikum || 10) }).map((_, idx) => {
                                             const pertemuanKe = idx + 1;
                                             const existingData = currentBapData.find((d: any) => d.pertemuan_ke === pertemuanKe);
                                             const isDone = !!existingData?.topik;
