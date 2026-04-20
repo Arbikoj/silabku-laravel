@@ -93,6 +93,7 @@ class BapController extends Controller
             'status' => 'required|in:LURING,DARING',
             'jumlah_hadir' => 'required|integer|min:0',
             'jumlah_tidak_hadir' => 'required|integer|min:0',
+            'dosen_pj' => 'nullable|string|max:255',
             // Only allow JPEG, JPG, PNG. No WebP.
             'foto_1' => 'nullable|image|mimes:jpeg,jpg,png',
             'foto_2' => 'nullable|image|mimes:jpeg,jpg,png',
@@ -193,6 +194,7 @@ class BapController extends Controller
                 'status' => $request->status,
                 'jumlah_hadir' => $request->jumlah_hadir,
                 'jumlah_tidak_hadir' => $request->jumlah_tidak_hadir,
+                'dosen_pj' => $request->dosen_pj,
                 'foto_google_drive_ids' => json_encode($fotoIds),
             ]
         );
@@ -257,7 +259,7 @@ class BapController extends Controller
             Log::info("Memindahkan file BAP ke direktori spesifik...");
             $docsService->moveToFolderHierarchy($newDocumentId, $folderHierarchy, $rootFolderId);
 
-            // 2. Siapkan Replacements Text & Images
+            // 2. Siapkan Replacements Text untuk Info Umum di Kop Surat (jika ada token di kop)
             $textReplacements = [
                 '{{nama}}' => $user->name,
                 '{{nim}}' => $user->nim ?? '-',
@@ -267,18 +269,66 @@ class BapController extends Controller
                 '{{lab}}' => $jadwal->laboratorium ? $jadwal->laboratorium->nama : '-',
             ];
             
+            // 2.5 Cari lokasi insertion dan generate tabel dinamis
+            $insertionIndex = $docsService->findTextIndex($newDocumentId, '{{BAP_CONTENT}}');
+            
+            if ($insertionIndex !== -1) {
+                // Hapus token placeholder
+                $docsService->getDocsService()->documents->batchUpdate($newDocumentId, new \Google\Service\Docs\BatchUpdateDocumentRequest([
+                    'requests' => [
+                        new \Google\Service\Docs\Request([
+                            'deleteContentRange' => [
+                                'range' => [
+                                    'startIndex' => $insertionIndex,
+                                    'endIndex' => $insertionIndex + strlen('{{BAP_CONTENT}}')
+                                ]
+                            ]
+                        ])
+                    ]
+                ]));
+            } else {
+                // Jika tidak ada token, taruh di akhir body (index 1 biasanya awal, let's just use 1 if not found)
+                $insertionIndex = 1;
+            }
+
+            Log::info("Generating dynamic tables at index: {$insertionIndex}");
+
+            $generalInfo = [
+                'judul' => $jadwal->mataKuliah->nama,
+                'kelas' => $jadwal->kelas ? $jadwal->kelas->nama : '-',
+                'asisten' => $user->name,
+                'lab' => $jadwal->laboratorium ? $jadwal->laboratorium->nama : '-',
+                'link' => $request->status ?? 'LURING'
+            ];
+
+            // Transform pertemuans to the format expected by GoogleDocsService
+            $timeString = ($jadwal->jam_mulai ? substr($jadwal->jam_mulai, 0, 5) : '') . ' - ' . ($jadwal->jam_selesai ? substr($jadwal->jam_selesai, 0, 5) : '');
+            
+            $meetingData = $pertemuans->map(function($p) use ($timeString) {
+                return [
+                    'pertemuan_ke' => $p->pertemuan_ke,
+                    'waktu' => Carbon::parse($p->tanggal)->setTimezone('Asia/Jakarta')->locale('id')->isoFormat('dddd, D MMMM YYYY') . ' / ' . $timeString,
+                    'dosen_pj' => $p->dosen_pj ?? '-',
+                    'topik' => $p->topik,
+                    'status' => $p->status,
+                    'hadir' => $p->jumlah_hadir,
+                    'tidak_hadir' => $p->jumlah_tidak_hadir
+                ];
+            })->values();
+
+            // Jika pertemuan kosong, buat minimal 1 dummy agar tidak error
+            if ($meetingData->isEmpty()) {
+                 // optionally add a dummy meeting if preferred
+            }
+
+            $docsService->generateDynamicBapTables($newDocumentId, $insertionIndex, $meetingData, $generalInfo);
+            
+            // 3. Image Replacements (The tables now contain tokens like {{foto_N_K}})
             $imageReplacements = [];
-            Log::info("Memulai parsing logic image/text 10 pertemuan...");
+            Log::info("Memulai parsing logic image untuk pertemuan yang ada...");
 
-            for ($i = 1; $i <= 10; $i++) {
-                $p = $pertemuans->get($i);
-
-                if ($p) {
-                    $textReplacements["{{tanggal_{$i}}}"] = Carbon::parse($p->tanggal)->setTimezone('Asia/Jakarta')->locale('id')->isoFormat('dddd, D MMMM YYYY');
-                    $textReplacements["{{topik_{$i}}}"] = $p->topik;
-                    $textReplacements["{{status_{$i}}}"] = $p->status ?? '-';
-                    $textReplacements["{{hadir_{$i}}}"] = $p->jumlah_hadir ?? '-';
-                    $textReplacements["{{tidak_hadir_{$i}}}"] = $p->jumlah_tidak_hadir ?? '-';
+            foreach ($pertemuans as $p) {
+                    $pKe = $p->pertemuan_ke;
 
                     // Images logic.
                     // Kini kita manfaatkan fitur native publish dari flysystem google drive
@@ -287,50 +337,34 @@ class BapController extends Controller
                     $fotoData = is_string($p->foto_google_drive_ids) ? json_decode($p->foto_google_drive_ids, true) : $p->foto_google_drive_ids;
                     
                     for ($k = 1; $k <= 3; $k++) {
-                        $fotoToken = "{{foto_{$i}_{$k}}}";
+                        $fotoToken = "{{foto_{$pKe}_{$k}}}";
                         
                         if (is_array($fotoData) && isset($fotoData["foto_{$k}"])) {
                             $path = $fotoData["foto_{$k}"]['path'];
                             
                             $fileId = '';
                             if (strpos($path, '/') === false && strlen($path) > 20) {
-                                // Menggunakan file ID langsung
                                 $fileId = $path;
                             } else {
-                                // Kita dapatkan URL preview dari flysystem
                                 $previewUrl = Storage::disk('google')->url($path);
-                                
-                                // Ekstrak ID Google Drive asli dari URL preview
                                 if (preg_match('/\/d\/([a-zA-Z0-9_-]+)/', $previewUrl, $matches)) {
                                     $fileId = $matches[1];
                                 } elseif (preg_match('/id=([a-zA-Z0-9_-]+)/', $previewUrl, $matches)) {
                                     $fileId = $matches[1];
                                 } else {
-                                    // Fallback jika regex gagal, tapi sangat jarang terjadi
                                     $pathParts = explode('/', $path);
                                     $fileId = end($pathParts);
                                 }
                             }
                             
-                            // Gunakan URL format Google Drive yang bisa langsung diakses secara binary oleh Docs API
                             $publicUrl = "https://drive.google.com/uc?export=download&id={$fileId}";
-                            Log::info("Foto URL untuk Docs [{$i}][{$k}]: {$publicUrl}");
+                            Log::info("Foto URL untuk Docs [{$pKe}][{$k}]: {$publicUrl}");
                             $imageReplacements[$fotoToken] = $publicUrl;
                         } else {
-                            $imageReplacements[$fotoToken] = ""; // Hapus token jika kosong
+                            $imageReplacements[$fotoToken] = ""; 
                         }
                     }
-                } else {
-                    $textReplacements["{{tanggal_{$i}}}"] = '-';
-                    $textReplacements["{{topik_{$i}}}"] = '-';
-                    $textReplacements["{{status_{$i}}}"] = '-';
-                    $textReplacements["{{hadir_{$i}}}"] = '-';
-                    $textReplacements["{{tidak_hadir_{$i}}}"] = '-';
-                    $imageReplacements["{{foto_{$i}_1}}"] = "";
-                    $imageReplacements["{{foto_{$i}_2}}"] = "";
-                    $imageReplacements["{{foto_{$i}_3}}"] = "";
                 }
-            }
             
             Log::info("Mengirim batch update ke Google Docs API...");
 

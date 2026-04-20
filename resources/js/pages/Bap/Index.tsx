@@ -59,6 +59,7 @@ export default function BapIndex({ jadwalPraktikums, bapProgress }: BapPageProps
             status: existingData?.status || 'LURING',
             jumlah_hadir: existingData?.jumlah_hadir ?? '',
             jumlah_tidak_hadir: existingData?.jumlah_tidak_hadir ?? '',
+            dosen_pj: existingData?.dosen_pj || '',
             foto_1: null as File | null,
             foto_2: null as File | null,
             foto_3: null as File | null,
@@ -134,6 +135,18 @@ export default function BapIndex({ jadwalPraktikums, bapProgress }: BapPageProps
                             placeholder="Contoh: 2"
                         />
                         {errors.jumlah_tidak_hadir && <p className="text-red-500 text-xs">{errors.jumlah_tidak_hadir}</p>}
+                    </div>
+                    
+                    <div className="space-y-2 md:col-span-2">
+                        <Label>Dosen Penanggung Jawab (Dosen PJ)</Label>
+                        <Input 
+                            type="text" 
+                            value={data.dosen_pj} 
+                            onChange={e => setData('dosen_pj', e.target.value)} 
+                            className="bg-white"
+                            placeholder="Contoh: Dr. John Doe"
+                        />
+                        {errors.dosen_pj && <p className="text-red-500 text-xs">{errors.dosen_pj}</p>}
                     </div>
 
                     <div className="space-y-2 md:col-span-2">
