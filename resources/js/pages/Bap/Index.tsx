@@ -50,6 +50,9 @@ export default function BapIndex({ jadwalPraktikums, bapProgress }: BapPageProps
         );
     };
 
+    const ALLOWED_FOTO_TYPES = ['image/jpeg', 'image/png'];
+    const ALLOWED_FOTO_EXTENSIONS = ['.jpg', '.jpeg', '.png'];
+
     const BapForm = ({ jadwal, pertemuanKe, existingData }: { jadwal: any, pertemuanKe: number, existingData: any }) => {
         const { data, setData, post, processing, errors } = useForm({
             jadwal_praktikum_id: jadwal.id,
@@ -65,8 +68,35 @@ export default function BapIndex({ jadwalPraktikums, bapProgress }: BapPageProps
             foto_3: null as File | null,
         });
 
+        const [fotoErrors, setFotoErrors] = useState<Record<string, string>>({});
+        const hasInvalidFoto = Object.values(fotoErrors).some(msg => msg !== '');
+
+        const handleFotoChange = (photoKey: 'foto_1' | 'foto_2' | 'foto_3', file: File | null) => {
+            if (file) {
+                const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
+                if (!ALLOWED_FOTO_TYPES.includes(file.type) && !ALLOWED_FOTO_EXTENSIONS.includes(fileExtension)) {
+                    setFotoErrors(prev => ({ ...prev, [photoKey]: `Format "${file.name}" tidak didukung. Gunakan JPG, JPEG, atau PNG.` }));
+                    setData(photoKey, null);
+                    return;
+                }
+            }
+            setFotoErrors(prev => ({ ...prev, [photoKey]: '' }));
+            setData(photoKey, file);
+        };
+
         const fotoData = existingData?.foto_google_drive_ids ? JSON.parse(existingData.foto_google_drive_ids) : null;
         const isCompleted = !!existingData?.topik;
+
+        // Check all fields are filled
+        const allFieldsFilled = !!(data.tanggal && data.topik.trim() && data.status && String(data.jumlah_hadir) !== '' && String(data.jumlah_tidak_hadir) !== '' && data.dosen_pj.trim());
+
+        // Check all 3 photos are provided (new upload OR existing)
+        const allFotosProvided = [1, 2, 3].every(i => {
+            const key = `foto_${i}` as 'foto_1' | 'foto_2' | 'foto_3';
+            return data[key] || (fotoData && fotoData[key]);
+        });
+
+        const isFormComplete = allFieldsFilled && allFotosProvided;
 
         const submit = (e: React.FormEvent) => {
             e.preventDefault();
@@ -162,7 +192,7 @@ export default function BapIndex({ jadwalPraktikums, bapProgress }: BapPageProps
                     </div>
 
                     <div className="space-y-2 md:col-span-2">
-                        <Label>Dokumentasi (Minimal 3 Foto, Max: 2MB/foto)</Label>
+                        <Label>Dokumentasi (3 Foto jpg/jpeg/png, Max: 2MB/foto)</Label>
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                             {[1, 2, 3].map((i) => {
                                 const photoKey = `foto_${i}` as 'foto_1'|'foto_2'|'foto_3';
@@ -173,9 +203,9 @@ export default function BapIndex({ jadwalPraktikums, bapProgress }: BapPageProps
                                         <div className="flex items-center justify-center w-full h-32 border-2 border-dashed rounded-lg bg-white relative hover:bg-slate-50 transition-colors">
                                             <input 
                                                 type="file" 
-                                                accept="image/*"
+                                                accept=".jpg,.jpeg,.png"
                                                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                                                onChange={e => setData(photoKey, e.target.files ? e.target.files[0] : null)}
+                                                onChange={e => handleFotoChange(photoKey, e.target.files ? e.target.files[0] : null)}
                                             />
                                             <div className="text-center p-4">
                                                 <Upload className="w-6 h-6 mx-auto text-muted-foreground mb-2" />
@@ -184,6 +214,7 @@ export default function BapIndex({ jadwalPraktikums, bapProgress }: BapPageProps
                                                 </p>
                                             </div>
                                         </div>
+                                        {fotoErrors[photoKey] && <p className="text-amber-600 text-xs font-medium">⚠ {fotoErrors[photoKey]}</p>}
                                         {errors[photoKey] && <p className="text-red-500 text-xs">{errors[photoKey]}</p>}
                                     </div>
                                 )
@@ -196,7 +227,7 @@ export default function BapIndex({ jadwalPraktikums, bapProgress }: BapPageProps
                 </div>
 
                 <div className="flex justify-end pt-2">
-                    <Button type="submit" disabled={processing} className="bg-emerald-600 hover:bg-emerald-700">
+                    <Button type="submit" disabled={processing || hasInvalidFoto || !isFormComplete} className="bg-emerald-600 hover:bg-emerald-700">
                         {processing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
                         Simpan Pertemuan {pertemuanKe}
                     </Button>
