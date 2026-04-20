@@ -235,7 +235,9 @@ class BapController extends Controller
         }
 
         $semesterName = $jadwal->semester ? $jadwal->semester->nama : 'Semester';
-        $docTitle = "{$user->name}-{$user->nim}";
+        $kelasName = $jadwal->kelas ? $jadwal->kelas->nama : 'Kelas';
+        $mkName = $jadwal->mataKuliah ? $jadwal->mataKuliah->nama : 'MK';
+        $docTitle = "{$kelasName}-{$user->name}-{$user->nim}";
         
         try {
             // Hapus BAP lama dengan nama yang persis sama agar tidak dobel/menumpuk
