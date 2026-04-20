@@ -266,7 +266,7 @@ class BapController extends Controller
                 '{{mata_kuliah}}' => $jadwal->mataKuliah->nama,
                 '{{kelas}}' => $jadwal->kelas ? $jadwal->kelas->nama : '-',
                 '{{waktu_praktikum}}' => ($jadwal->jam_mulai ? substr($jadwal->jam_mulai, 0, 5) : '') . ' - ' . ($jadwal->jam_selesai ? substr($jadwal->jam_selesai, 0, 5) : ''),
-                '{{lab}}' => $jadwal->laboratorium ? $jadwal->laboratorium->nama : '-',
+                '{{lab}}' => $jadwal->laboratorium ? $jadwal->laboratorium->name : '-',
             ];
             
             // 2.5 Cari lokasi insertion dan generate tabel dinamis
@@ -297,7 +297,7 @@ class BapController extends Controller
                 'judul' => $jadwal->mataKuliah->nama,
                 'kelas' => $jadwal->kelas ? $jadwal->kelas->nama : '-',
                 'asisten' => $user->name,
-                'lab' => $jadwal->laboratorium ? $jadwal->laboratorium->nama : '-',
+                'lab' => $jadwal->laboratorium ? $jadwal->laboratorium->name : '-',
                 'link' => $request->status ?? 'LURING'
             ];
 

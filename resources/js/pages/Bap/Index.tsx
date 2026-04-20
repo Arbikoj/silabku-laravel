@@ -289,7 +289,7 @@ export default function BapIndex({ jadwalPraktikums, bapProgress }: BapPageProps
                                             <CardDescription className="text-sm mt-1">
                                                 Kelas {jadwal.kelas?.nama} • {jadwal.hari}, {jadwal.jam_mulai ? jadwal.jam_mulai.substring(0,5) : ''} - {jadwal.jam_selesai ? jadwal.jam_selesai.substring(0,5) : ''}
                                                 <br/>
-                                                <span className="text-indigo-600/80 font-medium pt-1 inline-block">Lab: {jadwal.laboratorium?.nama ?? '-'}</span>
+                                                <span className="text-indigo-600/80 font-medium pt-1 inline-block">Lab: {jadwal.laboratorium?.name ?? '-'}</span>
                                             </CardDescription>
                                         </div>
                                         <div className="flex flex-col items-end gap-2">
