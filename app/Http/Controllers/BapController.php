@@ -122,7 +122,18 @@ class BapController extends Controller
             $fotoIds = is_array($existingBap->foto_google_drive_ids) ? $existingBap->foto_google_drive_ids : (json_decode($existingBap->foto_google_drive_ids, true) ?? []);
         }
         
-        $folderHierarchy = ['Asisten', $semesterName, 'BAP', $mkName, 'Foto', "{$user->nim}-{$user->name}"];
+        // Ambil nama event dari pendaftaran asisten
+        $application = Application::where('user_id', $user->id)
+            ->where('status', 'approved')
+            ->whereHas('applicationMataKuliah.eventMataKuliah', function ($query) use ($jadwal) {
+                $query->where('mata_kuliah_id', $jadwal->mata_kuliah_id)
+                    ->where('kelas_id', $jadwal->kelas_id);
+            })
+            ->with('event')
+            ->first();
+        $eventName = $application ? $application->event->nama : 'Event';
+
+        $folderHierarchy = ['Asisten', $semesterName, $eventName, 'BAP', $mkName, 'Foto', "{$user->nim}-{$user->name}"];
         
         $rootFolderCfg = config('filesystems.disks.google.folderId', env('GOOGLE_DRIVE_FOLDER', 'root'));
         if ($rootFolderCfg && $rootFolderCfg !== 'root') {
@@ -248,8 +259,19 @@ class BapController extends Controller
             $newDocumentId = $docsService->duplicateTemplate($templateId, $docTitle);
             Log::info("Template berhasil diduplikasi: {$newDocumentId}");
 
+            // Ambil nama event dari pendaftaran asisten
+            $application = Application::where('user_id', $user->id)
+                ->where('status', 'approved')
+                ->whereHas('applicationMataKuliah.eventMataKuliah', function ($query) use ($jadwal) {
+                    $query->where('mata_kuliah_id', $jadwal->mata_kuliah_id)
+                        ->where('kelas_id', $jadwal->kelas_id);
+                })
+                ->with('event')
+                ->first();
+            $eventName = $application ? $application->event->nama : 'Event';
+
             // 1.5 Pindahkan dokumen BAP ke folder secara hierarki
-            $folderHierarchy = ['Asisten', $semesterName, 'BAP', $jadwal->mataKuliah->nama];
+            $folderHierarchy = ['Asisten', $semesterName, $eventName, 'BAP', $jadwal->mataKuliah->nama];
             
             $rootFolderCfg = config('filesystems.disks.google.folderId', env('GOOGLE_DRIVE_FOLDER', 'root'));
             if ($rootFolderCfg && $rootFolderCfg !== 'root') {

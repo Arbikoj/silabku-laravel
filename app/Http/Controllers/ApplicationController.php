@@ -6,6 +6,7 @@ use App\Models\Application;
 use App\Models\ApplicationMataKuliah;
 use App\Models\Event;
 use App\Models\EventMataKuliah;
+use App\Services\GoogleDocsService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\Auth;
@@ -122,7 +123,7 @@ class ApplicationController extends Controller
     }
 
     // ─── Mahasiswa: daftar ke event ───────────────────────
-    public function apply(Request $request)
+    public function apply(Request $request, GoogleDocsService $docsService)
     {
         $request->validate([
             'event_id' => 'required|exists:events,id',
@@ -133,7 +134,7 @@ class ApplicationController extends Controller
         ]);
 
         $user = Auth::user();
-        $event = Event::findOrFail($request->event_id);
+        $event = Event::with('semester')->findOrFail($request->event_id);
 
         if (!$event->is_open) {
             return response()->json(['message' => 'Pendaftaran event sudah ditutup.'], 422);
@@ -192,9 +193,41 @@ class ApplicationController extends Controller
                     $emk = $emks[$emkId];
                     // Upload SPTJM file
                     $file = $request->file("applications.{$index}.sptjm_file");
-                    $folderName = "SPTJM/" . preg_replace('/[^A-Za-z0-9\- \_]/', '', $emk->mataKuliah->nama);
+                    
+                    $semesterName = $event->semester ? $event->semester->nama : 'Semester';
+                    $eventName = $event->nama;
+                    $mkNameForFolder = preg_replace('/[^A-Za-z0-9\- \_]/', '', $emk->mataKuliah->nama);
+                    
+                    $folderHierarchy = ['Asisten', $semesterName, $eventName, 'SPTJM', $mkNameForFolder];
+                    
+                    $rootFolderCfg = config('filesystems.disks.google.folderId', env('GOOGLE_DRIVE_FOLDER', 'root'));
+                    if ($rootFolderCfg && $rootFolderCfg !== 'root') {
+                        if (strlen($rootFolderCfg) < 20) {
+                            array_unshift($folderHierarchy, $rootFolderCfg);
+                            $rootFolderId = 'root';
+                        } else {
+                            $rootFolderId = $rootFolderCfg;
+                        }
+                    } else {
+                        $rootFolderId = 'root';
+                    }
+
+                    $targetFolderId = $docsService->ensureFolderHierarchyAndGetId($folderHierarchy, $rootFolderId);
                     $filename = "{$emk->kelas->nama}-{$user->nim}-{$user->name}.{$file->extension()}";
-                    $path = \Illuminate\Support\Facades\Storage::disk('google')->putFileAs($folderName, $file, $filename);
+                    
+                    // Upload menggunakan Service agar hirarki terjaga (terutama jika ada slash di nama folder)
+                    $path = $docsService->uploadFileToFolder($file->getRealPath(), $filename, $file->getMimeType(), $targetFolderId);
+
+                    // Set agar file beralamat public (read-only) agar bisa dipreview reviewer
+                    try {
+                        $permission = new \Google\Service\Drive\Permission([
+                            'type' => 'anyone',
+                            'role' => 'reader',
+                        ]);
+                        $docsService->getDriveService()->permissions->create($path, $permission);
+                    } catch (\Exception $pe) {
+                        \Illuminate\Support\Facades\Log::warning("Gagal set public SPTJM: " . $path);
+                    }
 
                     ApplicationMataKuliah::create([
                         'application_id' => $application->id,

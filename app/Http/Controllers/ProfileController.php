@@ -52,7 +52,7 @@ class ProfileController extends Controller
                     Storage::disk('google')->delete($profile->transkrip_gd_id);
                 }
                 $filename = $user->nim . '-' . \Illuminate\Support\Str::slug($user->name) . '.pdf';
-                $path = $request->file('transkrip')->storeAs('transkrip', $filename, 'google');
+                $path = $request->file('transkrip')->storeAs('Asisten/transkrip', $filename, 'google');
                 $data['transkrip_gd_id'] = $path;
             } catch (\Exception $e) {
                 return response()->json([
@@ -68,7 +68,7 @@ class ProfileController extends Controller
                 }
                 $extension = $request->file('ktm')->getClientOriginalExtension();
                 $filename = $user->nim . '-' . \Illuminate\Support\Str::slug($user->name) . '-ktm.' . $extension;
-                $path = $request->file('ktm')->storeAs('ktm', $filename, 'google');
+                $path = $request->file('ktm')->storeAs('Asisten/ktm', $filename, 'google');
                 $data['ktm_gd_id'] = $path;
             } catch (\Exception $e) {
                 return response()->json([
