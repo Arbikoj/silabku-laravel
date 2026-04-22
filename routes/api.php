@@ -69,6 +69,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::middleware('role:admin,dosen')->group(function () {
         Route::get('/database/asisten', [ApplicationController::class, 'database']);
         Route::get('/database/asisten-unik', [ApplicationController::class, 'databaseUnique']);
+
+        // ── Sertifikat ──────────────────────────────────────────
+        Route::prefix('sertifikat')->name('sertifikat.')->group(function () {
+            Route::post('/upload-template', [\App\Http\Controllers\SertifikatController::class, 'uploadTemplate'])->name('upload-template');
+            Route::get('/preview-template', [\App\Http\Controllers\SertifikatController::class, 'previewTemplate'])->name('preview-template');
+            Route::post('/save-config', [\App\Http\Controllers\SertifikatController::class, 'saveConfig'])->name('save-config');
+            Route::get('/get-config', [\App\Http\Controllers\SertifikatController::class, 'getConfig'])->name('get-config');
+            Route::post('/generate', [\App\Http\Controllers\SertifikatController::class, 'generate'])->name('generate');
+        });
     });
 });
 

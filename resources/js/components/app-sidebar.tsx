@@ -4,6 +4,7 @@ import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, Sid
 import { DropdownItem, type NavItem } from '@/types';
 import { usePage, Link } from '@inertiajs/react';
 import {
+    Award,
     Bolt,
     BookOpen,
     Database,
@@ -122,6 +123,15 @@ export function AppSidebar() {
         },
     ];
 
+    const sertifikatItems: DropdownItem[] = [
+        {
+            title: 'Sertifikat',
+            url: '/database/sertifikat',
+            icon: Award,
+            isActive: true,
+        },
+    ];
+
     // ── Build full nav ─────────────────────────────────────────
     const dropdownNav: DropdownItem[] = [
         ...baseMenuItems,
@@ -132,6 +142,7 @@ export function AppSidebar() {
         ...(role === 'admin' ? adminItems : []),
         ...((role === 'admin' || role === 'dosen') ? seleksiItems : []),
         ...((role === 'admin' || role === 'dosen') ? databaseItems : []),
+        ...((role === 'admin' || role === 'dosen') ? sertifikatItems : []),
     ];
 
     const footerNavItems: NavItem[] = [
