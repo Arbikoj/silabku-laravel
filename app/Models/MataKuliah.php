@@ -24,4 +24,9 @@ class MataKuliah extends Model
     {
         return $this->hasMany(JadwalPraktikum::class, 'mata_kuliah_id');
     }
+
+    public function sertifikatPenerbitan()
+    {
+        return $this->hasMany(SertifikatPenerbitan::class);
+    }
 }

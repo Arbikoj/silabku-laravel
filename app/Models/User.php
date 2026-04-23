@@ -45,6 +45,11 @@ class User extends Authenticatable
         return $this->hasMany(Application::class);
     }
 
+    public function sertifikatPenerbitan()
+    {
+        return $this->hasMany(SertifikatPenerbitan::class);
+    }
+
     // ─── Role Helpers ────────────────────────────────────
     public function isAdmin(): bool
     {

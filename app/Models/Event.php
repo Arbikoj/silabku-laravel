@@ -37,6 +37,11 @@ class Event extends Model
         return $this->hasMany(Application::class);
     }
 
+    public function sertifikatPenerbitan()
+    {
+        return $this->hasMany(SertifikatPenerbitan::class);
+    }
+
     // Applicants yang sudah di-approve
     public function approvedApplications()
     {

@@ -41,6 +41,7 @@ services:
       APP_STARTUP_ARTISAN_COMMAND: migrate:fresh --seed --force
     volumes:
       - ./:/var/www/html
+      - ./docker/entrypoint.sh:/entrypoint.sh
     depends_on:
       db:
         condition: service_healthy
