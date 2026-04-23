@@ -24,6 +24,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/profile', [ProfileController::class, 'show']);
     Route::post('/profile', [ProfileController::class, 'update']);
 
+    // ── Sertifikat (mahasiswa) ────────────────────────────────
+    Route::get('/sertifikat/my', [\App\Http\Controllers\SertifikatController::class, 'mySertifikat']);
+
     // ── Semesters (admin only) ────────────────────────────────
     Route::apiResource('/semesters', SemesterController::class);
 

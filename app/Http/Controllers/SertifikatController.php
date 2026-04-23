@@ -742,4 +742,29 @@ class SertifikatController extends Controller
             $docsService->getDriveService()->files->delete($file->id);
         }
     }
+
+    public function mySertifikat(Request $request)
+    {
+        $perPage = $request->input('per_page', 10);
+        
+        $sertifikats = SertifikatPenerbitan::with(['event.semester', 'mataKuliah'])
+            ->where('user_id', $request->user()->id)
+            ->latest('generated_at')
+            ->paginate($perPage);
+
+        return response()->json($sertifikats);
+    }
+
+    public function viewSertifikat($id, Request $request)
+    {
+        $sertifikat = SertifikatPenerbitan::where('id', $id)
+            ->where('user_id', $request->user()->id)
+            ->firstOrFail();
+
+        if (!$sertifikat->google_drive_file_id) {
+            abort(404, 'Sertifikat tidak ditemukan');
+        }
+
+        return redirect()->away('https://drive.google.com/file/d/' . $sertifikat->google_drive_file_id . '/preview');
+    }
 }

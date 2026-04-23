@@ -25,6 +25,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/my-applications', fn() => Inertia::render('oprec/my-applications/page'))->name('my-applications');
     });
 
+    // ── Sertifikat (mahasiswa) ────────────────────────────────
+    Route::get('/sertifikat', fn() => Inertia::render('sertifikat/page'))->name('sertifikat.my');
+    Route::get('/sertifikat/{id}/view', [\App\Http\Controllers\SertifikatController::class, 'viewSertifikat'])->name('sertifikat.view');
+
     // ── Admin routes ─────────────────────────────────────────
     Route::prefix('admin')->name('admin.')->middleware('role:admin')->group(function () {
         Route::get('/semesters', fn() => Inertia::render('admin/semesters/page'))->name('semesters');

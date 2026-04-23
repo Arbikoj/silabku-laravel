@@ -89,6 +89,15 @@ export function AppSidebar() {
         },
     ];
 
+    const sertifikatMahasiswaItems: DropdownItem[] = [
+        {
+            title: 'Sertifikat',
+            url: '/sertifikat',
+            icon: Award,
+            isActive: true,
+        },
+    ];
+
     // ── Menu: admin ───────────────────────────────────────────
     const adminItems: DropdownItem[] = [
         {
@@ -138,6 +147,7 @@ export function AppSidebar() {
         ...((role === 'admin') ? dataItems : []),
         ...((role === 'admin' || role === 'dosen' || role === 'user') ? jadwalItems : []),
         ...(role === 'user' ? bapItems : []),
+        ...(role === 'user' ? sertifikatMahasiswaItems : []),
         ...(role === 'user' ? oprecItems : []),
         ...(role === 'admin' ? adminItems : []),
         ...((role === 'admin' || role === 'dosen') ? seleksiItems : []),
