@@ -39,44 +39,41 @@ class LaboratoriumSeeder extends Seeder
         }
 
         // Dummy Data for Jadwal Praktikum
-        $semester = Semester::first();
+        $semesters = Semester::all();
         $kelasList = Kelas::with('mataKuliah')->get();
 
-        if (!$semester || $kelasList->isEmpty()) {
+        if ($semesters->isEmpty() || $kelasList->isEmpty()) {
             return;
         }
 
         $hariList = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat'];
+        $slotWaktu = [
+            ['07:30', '09:30'],
+            ['10:00', '12:00'],
+            ['13:00', '15:00'],
+            ['15:00', '17:00'],
+        ];
 
-        foreach ($labModels as $lab) {
-            foreach ($hariList as $hari) {
-                // Sesi 1
-                $k1 = $kelasList->random();
-                JadwalPraktikum::firstOrCreate([
-                    'laboratorium_id' => $lab->id,
-                    'semester_id' => $semester->id,
-                    'mata_kuliah_id' => $k1->mata_kuliah_id,
-                    'kelas_id' => $k1->id,
-                    'hari' => $hari,
-                    'jam_mulai' => '08:00',
-                    'jam_selesai' => '10:00',
-                ], [
-                    'keterangan' => 'Dummy jadwal',
-                ]);
-
-                // Sesi 2
-                $k2 = $kelasList->random();
-                JadwalPraktikum::firstOrCreate([
-                    'laboratorium_id' => $lab->id,
-                    'semester_id' => $semester->id,
-                    'mata_kuliah_id' => $k2->mata_kuliah_id,
-                    'kelas_id' => $k2->id,
-                    'hari' => $hari,
-                    'jam_mulai' => '13:00',
-                    'jam_selesai' => '15:00',
-                ], [
-                    'keterangan' => 'Dummy jadwal',
-                ]);
+        foreach ($semesters as $semester) {
+            foreach ($labModels as $lab) {
+                foreach ($hariList as $hari) {
+                    foreach ($slotWaktu as $slot) {
+                        if (rand(0, 10) > 4) { // 60% chance per slot per lab per semester
+                            $k = $kelasList->random();
+                            JadwalPraktikum::firstOrCreate([
+                                'laboratorium_id' => $lab->id,
+                                'semester_id' => $semester->id,
+                                'mata_kuliah_id' => $k->mata_kuliah_id,
+                                'kelas_id' => $k->id,
+                                'hari' => $hari,
+                                'jam_mulai' => $slot[0],
+                                'jam_selesai' => $slot[1],
+                            ], [
+                                'keterangan' => 'Praktikum ' . ($k->mataKuliah->nama ?? 'Mata Kuliah'),
+                            ]);
+                        }
+                    }
+                }
             }
         }
     }

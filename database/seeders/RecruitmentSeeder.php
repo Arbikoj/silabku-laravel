@@ -66,76 +66,95 @@ class RecruitmentSeeder extends Seeder
             ]
         );
 
-        $semesterAktif = Semester::firstOrCreate(
-            ['nama' => 'Gasal 2026/2027'],
-            ['tipe' => 'gasal', 'tahun' => 2026, 'is_active' => true]
-        );
-
-        Semester::firstOrCreate(
-            ['nama' => 'Genap 2025/2026'],
-            ['tipe' => 'genap', 'tahun' => 2025, 'is_active' => false]
-        );
-
-        $mataKuliahDasar = MataKuliah::updateOrCreate(
-            ['kode' => 'IF101'],
-            ['nama' => 'Dasar Pemrograman', 'sks' => 3, 'pertemuan_praktikum' => 12, 'nilai_minimum' => 'B']
-        );
-        $mataKuliahStruktur = MataKuliah::updateOrCreate(
-            ['kode' => 'IF202'],
-            ['nama' => 'Struktur Data', 'sks' => 3, 'pertemuan_praktikum' => 10, 'nilai_minimum' => 'B']
-        );
-        $mataKuliahBasisData = MataKuliah::updateOrCreate(
-            ['kode' => 'IF303'],
-            ['nama' => 'Basis Data', 'sks' => 4, 'pertemuan_praktikum' => 14, 'nilai_minimum' => 'BC']
-        );
-        $mataKuliahJarkom = MataKuliah::updateOrCreate(
-            ['kode' => 'IF404'],
-            ['nama' => 'Jaringan Komputer', 'sks' => 3, 'pertemuan_praktikum' => 10, 'nilai_minimum' => 'C']
-        );
-
-        $kelasConfigs = [
-            [$mataKuliahDasar->id, 'RA', 40],
-            [$mataKuliahDasar->id, 'RB', 32],
-            [$mataKuliahStruktur->id, 'RA', 45],
-            [$mataKuliahBasisData->id, 'RC', 24],
-            [$mataKuliahJarkom->id, 'RB', 28],
+        $semesterData = [
+            ['nama' => 'Gasal 2024/2025', 'tipe' => 'gasal', 'tahun' => 2024, 'is_active' => false],
+            ['nama' => 'Genap 2024/2025', 'tipe' => 'genap', 'tahun' => 2024, 'is_active' => false],
+            ['nama' => 'Gasal 2025/2026', 'tipe' => 'gasal', 'tahun' => 2025, 'is_active' => false],
+            ['nama' => 'Genap 2025/2026', 'tipe' => 'genap', 'tahun' => 2025, 'is_active' => false],
+            ['nama' => 'Gasal 2026/2027', 'tipe' => 'gasal', 'tahun' => 2026, 'is_active' => true],
         ];
 
-        $kelasMap = [];
-        foreach ($kelasConfigs as [$mataKuliahId, $namaKelas, $jumlahMhs]) {
-            $kelas = Kelas::updateOrCreate(
-                ['mata_kuliah_id' => $mataKuliahId, 'nama' => $namaKelas],
-                ['jumlah_mhs' => $jumlahMhs]
-            );
-
-            $kelasMap[$mataKuliahId . ':' . $namaKelas] = $kelas;
+        $semesters = [];
+        foreach ($semesterData as $data) {
+            $semesters[] = Semester::updateOrCreate(['nama' => $data['nama']], $data);
         }
 
-        $event = Event::updateOrCreate(
-            ['nama' => 'Asisten Praktikum Gasal 2026', 'semester_id' => $semesterAktif->id],
-            [
-                'tipe' => 'praktikum',
-                'is_open' => true,
-                'tanggal_buka' => '2026-03-01 00:00:00',
-                'tanggal_tutup' => '2026-03-31 23:59:59',
-                'deskripsi' => 'Pendaftaran asisten praktikum untuk semester Gasal 2026/2027.',
-            ]
-        );
+        $activeSemester = collect($semesters)->firstWhere('is_active', true);
 
-        $eventPilihan = [
-            [$mataKuliahDasar->id, 'RA'],
-            [$mataKuliahDasar->id, 'RB'],
-            [$mataKuliahStruktur->id, 'RA'],
-            [$mataKuliahBasisData->id, 'RC'],
-            [$mataKuliahJarkom->id, 'RB'],
+        $subjectsData = [
+            ['kode' => 'SD202', 'nama' => 'Struktur Data', 'sks' => 3, 'pertemuan_praktikum' => 10, 'nilai_minimum' => 'B', 'color' => '#3b82f6'],
+            ['kode' => 'PF203', 'nama' => 'Pemrograman Berorientasi Fungsi', 'sks' => 3, 'pertemuan_praktikum' => 10, 'nilai_minimum' => 'B', 'color' => '#10b981'],
+            ['kode' => 'AP101', 'nama' => 'Algoritma Pemrograman', 'sks' => 3, 'pertemuan_praktikum' => 12, 'nilai_minimum' => 'B', 'color' => '#f59e0b'],
+            ['kode' => 'BD303', 'nama' => 'Basis Data', 'sks' => 4, 'pertemuan_praktikum' => 14, 'nilai_minimum' => 'BC', 'color' => '#ef4444'],
+            ['kode' => 'SSD201', 'nama' => 'Statistika Sains Data', 'sks' => 3, 'pertemuan_praktikum' => 10, 'nilai_minimum' => 'B', 'color' => '#8b5cf6'],
+            ['kode' => 'ADW401', 'nama' => 'Analisis Deret Waktu', 'sks' => 3, 'pertemuan_praktikum' => 10, 'nilai_minimum' => 'B', 'color' => '#ec4899'],
+            ['kode' => 'ABD402', 'nama' => 'Analisis Big Data', 'sks' => 3, 'pertemuan_praktikum' => 10, 'nilai_minimum' => 'B', 'color' => '#6366f1'],
+            ['kode' => 'BIO403', 'nama' => 'Bioinformatika', 'sks' => 3, 'pertemuan_praktikum' => 10, 'nilai_minimum' => 'B', 'color' => '#14b8a6', 'r_only' => true],
+            ['kode' => 'PM404', 'nama' => 'Pembelajaran Mesin', 'sks' => 3, 'pertemuan_praktikum' => 10, 'nilai_minimum' => 'B', 'color' => '#f97316', 'r_only' => true],
+            ['kode' => 'PS405', 'nama' => 'Pemodelan Stokastik', 'sks' => 3, 'pertemuan_praktikum' => 10, 'nilai_minimum' => 'B', 'color' => '#06b6d4'],
+            ['kode' => 'VDI406', 'nama' => 'Visualisasi Data dan Informasi', 'sks' => 3, 'pertemuan_praktikum' => 10, 'nilai_minimum' => 'B', 'color' => '#84cc16'],
         ];
 
-        foreach ($eventPilihan as [$mataKuliahId, $namaKelas]) {
-            EventMataKuliah::firstOrCreate([
-                'event_id' => $event->id,
-                'mata_kuliah_id' => $mataKuliahId,
-                'kelas_id' => $kelasMap[$mataKuliahId . ':' . $namaKelas]->id,
-            ]);
+        $mataKuliahs = [];
+        foreach ($subjectsData as $data) {
+            $rOnly = $data['r_only'] ?? false;
+            unset($data['r_only']);
+            $mk = MataKuliah::updateOrCreate(['kode' => $data['kode']], $data);
+            $mataKuliahs[] = ['mk' => $mk, 'r_only' => $rOnly];
+        }
+
+        foreach ($semesters as $semester) {
+            $eventPraktikum = Event::updateOrCreate(
+                ['nama' => 'Asisten Praktikum ' . $semester->nama, 'semester_id' => $semester->id],
+                [
+                    'tipe' => 'praktikum',
+                    'is_open' => $semester->is_active,
+                    'tanggal_buka' => $semester->tahun . '-02-01 00:00:00',
+                    'tanggal_tutup' => $semester->tahun . '-12-31 23:59:59',
+                    'deskripsi' => 'Pendaftaran asisten praktikum untuk semester ' . $semester->nama,
+                ]
+            );
+
+            $eventTutorial = Event::updateOrCreate(
+                ['nama' => 'Asisten Tutorial ' . $semester->nama, 'semester_id' => $semester->id],
+                [
+                    'tipe' => 'tutorial',
+                    'is_open' => $semester->is_active,
+                    'tanggal_buka' => $semester->tahun . '-02-01 00:00:00',
+                    'tanggal_tutup' => $semester->tahun . '-12-31 23:59:59',
+                    'deskripsi' => 'Pendaftaran asisten tutorial untuk semester ' . $semester->nama,
+                ]
+            );
+
+            foreach ($mataKuliahs as $mkData) {
+                $mk = $mkData['mk'];
+                $rOnly = $mkData['r_only'];
+
+                $classesToCreate = $rOnly ? ['R'] : ['RA', 'RB', 'RC'];
+
+                foreach ($classesToCreate as $className) {
+                    $jumlahMhs = $rOnly ? rand(20, 30) : rand(40, 55);
+                    $kelas = Kelas::updateOrCreate(
+                        ['mata_kuliah_id' => $mk->id, 'nama' => $className],
+                        ['jumlah_mhs' => $jumlahMhs]
+                    );
+
+                    // Add to both events for variety
+                    EventMataKuliah::firstOrCreate([
+                        'event_id' => $eventPraktikum->id,
+                        'mata_kuliah_id' => $mk->id,
+                        'kelas_id' => $kelas->id,
+                    ]);
+
+                    if (rand(0, 1)) {
+                        EventMataKuliah::firstOrCreate([
+                            'event_id' => $eventTutorial->id,
+                            'mata_kuliah_id' => $mk->id,
+                            'kelas_id' => $kelas->id,
+                        ]);
+                    }
+                }
+            }
         }
     }
 }

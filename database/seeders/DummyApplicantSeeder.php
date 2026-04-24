@@ -38,19 +38,10 @@ class DummyApplicantSeeder extends Seeder
 
     public function run(): void
     {
-        $event = Event::with(['eventMataKuliah.mataKuliah', 'eventMataKuliah.kelas'])->first();
+        $events = Event::with(['eventMataKuliah.mataKuliah', 'eventMataKuliah.kelas'])->get();
 
-        if (!$event) {
+        if ($events->isEmpty()) {
             $this->command?->warn('DummyApplicantSeeder dilewati: belum ada event.');
-            return;
-        }
-
-        $eventMatkuls = EventMataKuliah::with(['mataKuliah', 'kelas'])
-            ->where('event_id', $event->id)
-            ->get();
-
-        if ($eventMatkuls->isEmpty()) {
-            $this->command?->warn('DummyApplicantSeeder dilewati: event belum memiliki mata kuliah-kelas.');
             return;
         }
 
@@ -59,124 +50,114 @@ class DummyApplicantSeeder extends Seeder
             ->value('id');
 
         $passwordHash = Hash::make('password');
-        $candidateIndex = 1;
-        $summary = [];
+        $poolSize = 563;
+        $usersPool = [];
 
-        foreach ($eventMatkuls as $eventMatkul) {
-            $quota = $this->calculateAssistantQuota((int) $eventMatkul->kelas->jumlah_mhs);
-            $applicantCount = max($quota + 4, (int) ceil($quota * 2));
+        $this->command?->info("Menyiapkan pool {$poolSize} mahasiswa recruitment...");
 
-            $createdChoiceIds = [];
-
-            for ($position = 0; $position < $applicantCount; $position++) {
-                $fullName = $this->buildCandidateName($candidateIndex);
-                $nim = $this->buildNim($candidateIndex);
-                $grade = $this->buildGradeForPosition($eventMatkul->mataKuliah->nilai_minimum, $position, $quota, $applicantCount);
-                $ipk = $this->buildIpkFromGrade($grade, $position);
-
-                $user = User::create([
+        for ($i = 1; $i <= $poolSize; $i++) {
+            $fullName = $this->buildCandidateName($i);
+            $user = User::firstOrCreate(
+                ['email' => sprintf('pelamar-%03d@student.id', $i)],
+                [
                     'name' => $fullName,
-                    'nim' => $nim,
-                    'email' => sprintf('pelamar-%04d@student.id', $candidateIndex),
+                    'nim' => $this->buildNim($i),
                     'password' => $passwordHash,
                     'role' => 'user',
-                ]);
+                ]
+            );
 
-                Profile::create([
-                    'user_id' => $user->id,
+            Profile::firstOrCreate(
+                ['user_id' => $user->id],
+                [
                     'nama_lengkap' => $fullName,
-                    'no_wa' => '0812' . str_pad((string) (77000000 + $candidateIndex), 8, '0', STR_PAD_LEFT),
-                    'norek' => '88' . str_pad((string) (10000000 + $candidateIndex), 8, '0', STR_PAD_LEFT),
+                    'no_wa' => '0812' . str_pad((string) (77000000 + $i), 8, '0', STR_PAD_LEFT),
+                    'norek' => '88' . str_pad((string) (10000000 + $i), 8, '0', STR_PAD_LEFT),
                     'nama_rek' => $fullName,
-                    'bank' => self::BANKS[$candidateIndex % count(self::BANKS)],
-                    'nilai_ipk' => $ipk,
-                ]);
+                    'bank' => self::BANKS[$i % count(self::BANKS)],
+                    'nilai_ipk' => round(2.5 + (mt_rand(0, 150) / 100), 2),
+                ]
+            );
+            $usersPool[] = $user;
+        }
 
-                $application = Application::create([
-                    'user_id' => $user->id,
-                    'event_id' => $event->id,
-                    'status' => 'pending',
-                ]);
+        foreach ($events as $event) {
+            $eventMatkuls = $event->eventMataKuliah;
 
-                $choice = ApplicationMataKuliah::create([
-                    'application_id' => $application->id,
-                    'event_mata_kuliah_id' => $eventMatkul->id,
-                    'nilai_mata_kuliah' => $grade,
-                    'status' => 'pending',
-                    'catatan' => null,
-                    'sptjm_gd_id' => null,
-                ]);
-
-                $createdChoiceIds[] = $choice->id;
-                $candidateIndex++;
+            if ($eventMatkuls->isEmpty()) {
+                continue;
             }
 
-            $rankedChoices = ApplicationMataKuliah::with('application.user.profile')
-                ->whereIn('id', $createdChoiceIds)
-                ->get()
-                ->sortBy([
-                    fn(ApplicationMataKuliah $choice) => $this->meetsMinimumGrade($choice->nilai_mata_kuliah, $eventMatkul->mataKuliah->nilai_minimum) ? 0 : 1,
-                    fn(ApplicationMataKuliah $choice) => -1 * $this->gradePoint($choice->nilai_mata_kuliah),
-                    fn(ApplicationMataKuliah $choice) => -1 * (float) ($choice->application?->user?->profile?->nilai_ipk ?? 0),
-                    fn(ApplicationMataKuliah $choice) => $choice->id,
-                ])
-                ->values();
+            foreach ($eventMatkuls as $eventMatkul) {
+                $quota = $this->calculateAssistantQuota((int) $eventMatkul->kelas->jumlah_mhs);
+                $applicantCount = min($poolSize, rand($quota + 1, $quota + 4));
 
-            $eligibleChoices = $rankedChoices
-                ->filter(fn(ApplicationMataKuliah $choice) => $this->meetsMinimumGrade($choice->nilai_mata_kuliah, $eventMatkul->mataKuliah->nilai_minimum))
-                ->values();
+                $shuffledPool = collect($usersPool)->shuffle();
+                $selectedUsers = $shuffledPool->take($applicantCount);
 
-            $approvedIds = $eligibleChoices->take($quota)->pluck('id')->all();
-            $pendingIds = $eligibleChoices->slice($quota, min(2, max($eligibleChoices->count() - $quota, 0)))->pluck('id')->all();
+                $createdChoiceIds = [];
 
-            $approvedCount = 0;
-            $pendingCount = 0;
-            $rejectedCount = 0;
+                foreach ($selectedUsers as $index => $user) {
+                    $grade = $this->buildGradeForPosition($eventMatkul->mataKuliah->nilai_minimum, $index, $quota, $applicantCount);
 
-            foreach ($rankedChoices as $choice) {
-                $isEligible = $this->meetsMinimumGrade($choice->nilai_mata_kuliah, $eventMatkul->mataKuliah->nilai_minimum);
-
-                if (in_array($choice->id, $approvedIds, true)) {
-                    $choice->update([
-                        'status' => 'approved',
-                        'catatan' => 'Memenuhi nilai minimum dan masuk kuota asisten.',
-                    ]);
-                    $approvedCount++;
-                } elseif (in_array($choice->id, $pendingIds, true)) {
-                    $choice->update([
+                    $application = Application::firstOrCreate([
+                        'user_id' => $user->id,
+                        'event_id' => $event->id,
+                    ], [
                         'status' => 'pending',
-                        'catatan' => 'Masih menunggu finalisasi reviewer.',
                     ]);
-                    $pendingCount++;
-                } else {
-                    $choice->update([
-                        'status' => 'rejected',
-                        'catatan' => $isEligible
-                            ? 'Belum dipilih karena kuota asisten untuk kelas ini sudah terpenuhi.'
-                            : 'Nilai mata kuliah belum memenuhi syarat minimum.',
+
+                    $choice = ApplicationMataKuliah::firstOrCreate([
+                        'application_id' => $application->id,
+                        'event_mata_kuliah_id' => $eventMatkul->id,
+                    ], [
+                        'nilai_mata_kuliah' => $grade,
+                        'status' => 'pending',
                     ]);
-                    $rejectedCount++;
+
+                    $createdChoiceIds[] = $choice->id;
                 }
 
-                $this->syncApplicationStatus($choice->application()->first(), $reviewerId);
+                // Ranking & Approval logic
+                $rankedChoices = ApplicationMataKuliah::with('application.user.profile')
+                    ->whereIn('id', $createdChoiceIds)
+                    ->get()
+                    ->sortBy([
+                        fn(ApplicationMataKuliah $choice) => $this->meetsMinimumGrade($choice->nilai_mata_kuliah, $eventMatkul->mataKuliah->nilai_minimum) ? 0 : 1,
+                        fn(ApplicationMataKuliah $choice) => -1 * $this->gradePoint($choice->nilai_mata_kuliah),
+                        fn(ApplicationMataKuliah $choice) => -1 * (float) ($choice->application?->user?->profile?->nilai_ipk ?? 0),
+                        fn(ApplicationMataKuliah $choice) => $choice->id,
+                    ])
+                    ->values();
+
+                $eligibleChoices = $rankedChoices
+                    ->filter(fn(ApplicationMataKuliah $choice) => $this->meetsMinimumGrade($choice->nilai_mata_kuliah, $eventMatkul->mataKuliah->nilai_minimum))
+                    ->values();
+
+                $approvedIds = $eligibleChoices->take($quota)->pluck('id')->all();
+
+                foreach ($rankedChoices as $choice) {
+                    $isEligible = $this->meetsMinimumGrade($choice->nilai_mata_kuliah, $eventMatkul->mataKuliah->nilai_minimum);
+
+                    if (in_array($choice->id, $approvedIds, true)) {
+                        $choice->update([
+                            'status' => 'approved',
+                            'catatan' => 'Memenuhi kuota.',
+                        ]);
+                    } else {
+                        $choice->update([
+                            'status' => $isEligible ? 'pending' : 'rejected',
+                            'catatan' => $isEligible ? 'Masuk daftar tunggu.' : 'Nilai tidak cukup.',
+                        ]);
+                    }
+
+                    $this->syncApplicationStatus($choice->application()->first(), $reviewerId);
+                }
             }
-
-            $summary[] = sprintf(
-                '%s kelas %s: pendaftar %d, kuota %d, approved %d, pending %d, rejected %d',
-                $eventMatkul->mataKuliah->nama,
-                $eventMatkul->kelas->nama,
-                $applicantCount,
-                $quota,
-                $approvedCount,
-                $pendingCount,
-                $rejectedCount
-            );
+            $this->command?->info("Selesai seeding untuk event: {$event->nama}");
         }
 
-        $this->command?->info('Dummy pelamar berhasil dibuat dengan distribusi kuota per kelas:');
-        foreach ($summary as $line) {
-            $this->command?->line('- ' . $line);
-        }
+        $this->command?->info('Dummy pelamar berhasil dibuat dengan pool terbatas (563 mahasiswa).');
     }
 
     private function calculateAssistantQuota(int $studentCount): int
