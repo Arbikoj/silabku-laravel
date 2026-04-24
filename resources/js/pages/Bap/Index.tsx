@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { BookOpen, Upload, Calendar, Send, Info, Loader2, FileText, CheckCircle2, ChevronDown, ChevronUp } from 'lucide-react';
+import { BookOpen, Upload, Calendar, Send, Info, Loader2, FileText, CheckCircle2, ChevronDown, ChevronUp, Eye } from 'lucide-react';
 import { useForm } from '@inertiajs/react';
 import { toast } from 'sonner';
 
@@ -296,14 +296,26 @@ export default function BapIndex({ jadwalPraktikums, bapProgress }: BapPageProps
                                             <div className="text-sm font-medium bg-white px-3 py-1 rounded-full border shadow-sm">
                                                 Progress: <span className={completedCount === (jadwal.mata_kuliah?.pertemuan_praktikum || 10) ? 'text-emerald-600' : 'text-blue-600'}>{completedCount}/{(jadwal.mata_kuliah?.pertemuan_praktikum || 10)}</span>
                                             </div>
-                                            <Button 
-                                                onClick={handleGenerate} 
-                                                disabled={processing || !isReadyToGenerate}
-                                                className="bg-indigo-600 hover:bg-indigo-700 shadow flex items-center"
-                                            >
-                                                {processing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileText className="w-4 h-4 mr-2" />}
-                                                Generate Dokumen BAP
-                                            </Button>
+                                            <div className="flex items-center gap-2">
+                                                {jadwal.bap_document_id && (
+                                                    <Button
+                                                        variant="outline"
+                                                        onClick={() => window.open(`/bap/${jadwal.application_mata_kuliah_id}/redirect-doc`, '_blank')}
+                                                        className="shadow-sm flex items-center border-indigo-200 text-indigo-700 hover:bg-indigo-50"
+                                                    >
+                                                        <Eye className="w-4 h-4 mr-2" />
+                                                        Lihat BAP
+                                                    </Button>
+                                                )}
+                                                <Button 
+                                                    onClick={handleGenerate} 
+                                                    disabled={processing || !isReadyToGenerate}
+                                                    className="bg-indigo-600 hover:bg-indigo-700 shadow flex items-center"
+                                                >
+                                                    {processing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileText className="w-4 h-4 mr-2" />}
+                                                    Generate Dokumen BAP
+                                                </Button>
+                                            </div>
                                         </div>
                                     </div>
                                 </CardHeader>

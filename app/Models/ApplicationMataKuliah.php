@@ -8,7 +8,7 @@ class ApplicationMataKuliah extends Model
 {
     protected $table = 'application_mata_kuliah';
 
-    protected $fillable = ['application_id', 'event_mata_kuliah_id', 'nilai_mata_kuliah', 'sptjm_gd_id', 'status', 'catatan'];
+    protected $fillable = ['application_id', 'event_mata_kuliah_id', 'nilai_mata_kuliah', 'sptjm_gd_id', 'status', 'catatan', 'bap_document_id'];
 
     public function application()
     {

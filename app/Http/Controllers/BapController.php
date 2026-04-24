@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\BapPertemuan;
 use App\Models\Application;
+use App\Models\ApplicationMataKuliah;
 use App\Models\jadwalPraktikum;
 use App\Services\GoogleDocsService;
 use Illuminate\Support\Facades\Storage;
@@ -56,6 +57,9 @@ class BapController extends Controller
                     $jadwals = $query->get();
                     
                     foreach ($jadwals as $j) {
+                        // Inject application class properties
+                        $j->bap_document_id = $appMk->bap_document_id;
+                        $j->application_mata_kuliah_id = $appMk->id;
                         $jadwalPraktikums->push($j);
                     }
                 }
@@ -420,11 +424,148 @@ class BapController extends Controller
                 }
             }
 
+            // Simpan status bahwa BAP sudah digenerate ke application_mata_kuliah
+            if ($application && $application->applicationMataKuliah) {
+                foreach ($application->applicationMataKuliah as $appMk) {
+                    if ($appMk->eventMataKuliah && 
+                        $appMk->eventMataKuliah->mata_kuliah_id === $jadwal->mata_kuliah_id && 
+                        $appMk->eventMataKuliah->kelas_id === $jadwal->kelas_id) {
+                        
+                        $appMk->update(['bap_document_id' => $newDocumentId]);
+                        Log::info("Berhasil mengupdate bap_document_id untuk pengguna {$user->name} pada MK {$jadwal->mataKuliah->nama} : {$newDocumentId}");
+                        break;
+                    }
+                }
+            }
+
             return redirect()->back()->with('success', 'BAP berhasil digenerate! Link Docs sudah dibuat.')->with('doc_url', "https://docs.google.com/document/d/{$newDocumentId}/edit");
 
         } catch (\Exception $e) {
             Log::error('Gagal generate BAP: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Gagal membuat dokumen BAP: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Get BAP monitoring data for all approved assistants
+     */
+    public function monitoring(Request $request)
+    {
+        // Database asisten ditarik dari pivot table yang statusnya approved
+        $query = ApplicationMataKuliah::with([
+            'application.user.profile',
+            'application.event.semester',
+            'eventMataKuliah.mataKuliah',
+            'eventMataKuliah.kelas',
+        ])->where('status', 'approved');
+
+        if ($request->event_id) {
+            $query->whereHas('application', fn($q) => $q->where('event_id', $request->event_id));
+        }
+        if ($request->search) {
+            $query->whereHas('application.user', fn($q) => $q->where('name', 'like', '%' . $request->search . '%')
+                ->orWhere('nim', 'like', '%' . $request->search . '%')
+                ->orWhereHas('profile', fn($p) => $p->where('nama_lengkap', 'like', '%' . $request->search . '%')));
+        }
+
+        $perPage = $request->per_page ?? 20;
+        $data = $query->orderByDesc('updated_at')->paginate($perPage);
+
+        $items = collect($data->items())->map(function ($amk) {
+            $userId = $amk->application->user_id ?? null;
+            $mataKuliahId = $amk->eventMataKuliah->mata_kuliah_id ?? null;
+            $kelasId = $amk->eventMataKuliah->kelas_id ?? null;
+            $semesterId = $amk->application->event->semester_id ?? null;
+
+            $bapCount = 0;
+            if ($userId && $mataKuliahId && $kelasId) {
+                $jadwalQuery = \App\Models\JadwalPraktikum::where('mata_kuliah_id', $mataKuliahId)
+                    ->where('kelas_id', $kelasId);
+                
+                if ($semesterId) {
+                    $jadwalQuery->where('semester_id', $semesterId);
+                }
+                
+                $jadwal = $jadwalQuery->first();
+
+                if ($jadwal) {
+                    $bapCount = \App\Models\BapPertemuan::where('jadwal_praktikum_id', $jadwal->id)
+                        ->where('user_id', $userId)
+                        ->count();
+                }
+            }
+
+            $bapMax = $amk->eventMataKuliah->mataKuliah->pertemuan_praktikum ?? 10;
+
+            $amkArray = $amk->toArray();
+            $amkArray['bap_count'] = $bapCount;
+            $amkArray['bap_max'] = $bapMax;
+
+            return $amkArray;
+        });
+
+        return response()->json([
+            'data' => $items,
+            'meta' => [
+                'total' => $data->total(),
+                'current_page' => $data->currentPage(),
+                'last_page' => $data->lastPage(),
+                'from' => $data->firstItem(),
+                'to' => $data->lastItem()
+            ],
+        ]);
+    }
+
+    /**
+     * Redirect to generated BAP Google Docs
+     */
+    public function redirectDoc($id, GoogleDocsService $docsService)
+    {
+        $amk = ApplicationMataKuliah::with([
+            'application.user',
+            'eventMataKuliah.kelas',
+        ])->findOrFail($id);
+
+        if (auth()->user()->role === 'user' && $amk->application->user_id !== auth()->id()) {
+            abort(403, 'Anda tidak diizinkan melihat dokumen ini.');
+        }
+
+        $user = $amk->application->user;
+        $kelasName = $amk->eventMataKuliah->kelas->nama;
+        $docTitle = "{$kelasName}-{$user->name}-{$user->nim}";
+        
+        // Use 'contains' for safer search in case of slight naming mismatches
+        $kelasClean = str_replace("'", "\'", $kelasName);
+        $nimClean = str_replace("'", "\'", $user->nim);
+
+        $results = $docsService->getDriveService()->files->listFiles([
+            'q' => "name contains '{$nimClean}' and mimeType = 'application/vnd.google-apps.document' and trashed = false",
+            'spaces' => 'drive',
+            'fields' => 'files(id, name)'
+        ]);
+
+        $files = $results->getFiles();
+
+        // Cari yang paling relevan (karena contains bisa saja mengembalikan doc BAP lain nim mirip, jadi kita cek exact string jika memungkinkan, 
+        // atau ambil yang pertama jika ada yang mengandung kelas juga)
+        $documentId = null;
+        foreach ($files as $file) {
+            if (str_contains($file->name, $kelasName) && str_contains($file->name, $user->nim)) {
+                $documentId = $file->id;
+                break;
+            }
+        }
+
+        // Fallback jika tidak match secara persis
+        if (!$documentId && count($files) > 0) {
+            $documentId = $files[0]->id;
+        }
+
+        if ($documentId) {
+            return redirect("https://docs.google.com/document/d/{$documentId}/edit");
+        }
+
+        return response("<h2>Dokumen BAP belum digenerate</h2><p>Asisten belum men-generate BAP ke Google Docs. Silakan minta asisten terkait untuk klik tombol 'Generate Dokumen BAP' di akun mereka terlebih dahulu.</p><script>setTimeout(()=>window.close(), 5000);</script>", 404)
+            ->header('Content-Type', 'text/html');
     }
 }

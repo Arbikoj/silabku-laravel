@@ -126,9 +126,18 @@ export function AppSidebar() {
             icon: Database,
             isActive: true,
             items: [
-                { title: 'Semua Asisten', url: '/database' },
+                { title: 'Semua Asisten', url: '/database/all' },
                 { title: 'Per Event', url: '/database/event' },
             ],
+        },
+    ];
+
+    const bapMonitoringItems: DropdownItem[] = [
+        {
+            title: 'Dokumen BAP',
+            url: '/database/bap',
+            icon: BookOpen,
+            isActive: true,
         },
     ];
 
@@ -156,6 +165,7 @@ export function AppSidebar() {
         ...(role === 'admin' ? adminItems : []),
         ...((role === 'admin' || role === 'dosen') ? seleksiItems : []),
         ...((role === 'admin' || role === 'dosen') ? databaseItems : []),
+        ...((role === 'admin' || role === 'dosen') ? bapMonitoringItems : []),
         ...((role === 'admin' || role === 'dosen') ? sertifikatItems : []),
     ];
 

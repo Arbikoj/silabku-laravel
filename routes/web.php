@@ -48,6 +48,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/', [\App\Http\Controllers\BapController::class, 'index'])->name('index');
         Route::post('/store', [\App\Http\Controllers\BapController::class, 'store'])->name('store');
         Route::post('/generate', [\App\Http\Controllers\BapController::class, 'generate'])->name('generate');
+        Route::get('/{id}/redirect-doc', [\App\Http\Controllers\BapController::class, 'redirectDoc'])->name('redirect-doc');
     });
 
     // ── Seleksi (admin + dosen) ──────────────────────────────
@@ -63,8 +64,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // ── Database Asisten ─────────────────────────────────────
     Route::prefix('database')->name('database.')->middleware('role:admin,dosen')->group(function () {
-        Route::get('/', fn() => Inertia::render('database/asisten/page'))->name('asisten');
+        Route::get('/all', fn() => Inertia::render('database/asisten/page'))->name('database-all');
         Route::get('/event', fn() => Inertia::render('database/per-event/page'))->name('per-event');
+        Route::get('/bap', fn() => Inertia::render('database/bap/page'))->name('bap');
     });
 
     // ── Sertifikat (Admin & Dosen) ───────────────────────────

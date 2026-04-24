@@ -72,6 +72,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::middleware('role:admin,dosen')->group(function () {
         Route::get('/database/asisten', [ApplicationController::class, 'database']);
         Route::get('/database/asisten-unik', [ApplicationController::class, 'databaseUnique']);
+        Route::get('/database/bap-monitoring', [\App\Http\Controllers\BapController::class, 'monitoring']);
 
         // ── Sertifikat ──────────────────────────────────────────
         Route::prefix('sertifikat')->name('sertifikat.')->group(function () {
