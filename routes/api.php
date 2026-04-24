@@ -75,6 +75,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // ── Sertifikat ──────────────────────────────────────────
         Route::prefix('sertifikat')->name('sertifikat.')->group(function () {
+            Route::get('/data', [\App\Http\Controllers\SertifikatController::class, 'allSertifikat'])->name('data');
             Route::get('/prepare-data', [\App\Http\Controllers\SertifikatController::class, 'prepareData'])->name('prepare-data');
             Route::post('/upload-template', [\App\Http\Controllers\SertifikatController::class, 'uploadTemplate'])->name('upload-template');
             Route::post('/download-sample', [\App\Http\Controllers\SertifikatController::class, 'downloadSample'])->name('download-sample');

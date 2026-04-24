@@ -65,7 +65,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('database')->name('database.')->middleware('role:admin,dosen')->group(function () {
         Route::get('/', fn() => Inertia::render('database/asisten/page'))->name('asisten');
         Route::get('/event', fn() => Inertia::render('database/per-event/page'))->name('per-event');
-        Route::get('/sertifikat', fn() => Inertia::render('database/sertifikat/page'))->name('sertifikat');
+    });
+
+    // ── Sertifikat (Admin & Dosen) ───────────────────────────
+    Route::prefix('sertifikat')->name('sertifikat.admin.')->middleware('role:admin,dosen')->group(function () {
+        Route::get('/penerbitan', fn() => Inertia::render('sertifikat/penerbitan/page'))->name('penerbitan');
+        Route::get('/data', fn() => Inertia::render('sertifikat/data/page'))->name('data');
     });
 });
 

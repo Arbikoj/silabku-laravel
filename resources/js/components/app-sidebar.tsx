@@ -135,9 +135,13 @@ export function AppSidebar() {
     const sertifikatItems: DropdownItem[] = [
         {
             title: 'Sertifikat',
-            url: '/database/sertifikat',
+            url: '#',
             icon: Award,
             isActive: true,
+            items: [
+                { title: 'Penerbitan', url: '/sertifikat/penerbitan' },
+                { title: 'Data Sertifikat', url: '/sertifikat/data' },
+            ],
         },
     ];
 

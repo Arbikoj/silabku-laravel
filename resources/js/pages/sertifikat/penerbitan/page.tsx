@@ -16,8 +16,8 @@ import { toast } from 'sonner';
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dosen', href: '#' },
-    { title: 'Sertifikat', href: '/database/sertifikat' },
+    { title: 'Sertifikat', href: '#' },
+    { title: 'Penerbitan', href: '/sertifikat/penerbitan' },
 ];
 
 interface EventItem {

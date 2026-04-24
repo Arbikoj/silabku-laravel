@@ -755,11 +755,30 @@ class SertifikatController extends Controller
         return response()->json($sertifikats);
     }
 
+    public function allSertifikat(Request $request)
+    {
+        $perPage = $request->input('per_page', 10);
+        $eventId = $request->input('event_id');
+
+        $query = SertifikatPenerbitan::with(['user.profile', 'event.semester', 'mataKuliah'])
+            ->latest('generated_at');
+
+        if ($eventId) {
+            $query->where('event_id', $eventId);
+        }
+
+        return response()->json($query->paginate($perPage));
+    }
+
     public function viewSertifikat($id, Request $request)
     {
-        $sertifikat = SertifikatPenerbitan::where('id', $id)
-            ->where('user_id', $request->user()->id)
-            ->firstOrFail();
+        $query = SertifikatPenerbitan::where('id', $id);
+
+        if (!in_array($request->user()->role, ['admin', 'dosen'])) {
+            $query->where('user_id', $request->user()->id);
+        }
+
+        $sertifikat = $query->firstOrFail();
 
         if (!$sertifikat->google_drive_file_id) {
             abort(404, 'Sertifikat tidak ditemukan');
