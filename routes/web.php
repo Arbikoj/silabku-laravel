@@ -66,7 +66,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('database')->name('database.')->middleware('role:admin,dosen')->group(function () {
         Route::get('/all', fn() => Inertia::render('database/asisten/page'))->name('database-all');
         Route::get('/event', fn() => Inertia::render('database/per-event/page'))->name('per-event');
-        Route::get('/bap', fn() => Inertia::render('database/bap/page'))->name('bap');
+    });
+
+    Route::prefix('bap')->name('bap.')->middleware('role:admin,dosen')->group(function () {
+        Route::get('/monitoring', fn() => Inertia::render('database/bap/page'))->name('monitoring');
     });
 
     // ── Sertifikat (Admin & Dosen) ───────────────────────────

@@ -24,7 +24,7 @@ import type { ColumnDef, PaginationState, SortingState } from '@tanstack/react-t
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Database Asisten', href: '/database' },
-    { title: 'Dokumen BAP', href: '/database/bap' },
+    { title: 'Dokumen BAP', href: '/bap/monitoring' },
 ];
 
 interface AssistantRow {

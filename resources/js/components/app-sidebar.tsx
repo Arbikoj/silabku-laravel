@@ -135,7 +135,7 @@ export function AppSidebar() {
     const bapMonitoringItems: DropdownItem[] = [
         {
             title: 'Dokumen BAP',
-            url: '/database/bap',
+            url: '/bap/monitoring',
             icon: BookOpen,
             isActive: true,
         },
