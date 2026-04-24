@@ -41,7 +41,7 @@ export default function Register() {
             <form className="flex flex-col gap-6" onSubmit={submit}>
                 <div className="grid gap-4">
                     <div className="grid gap-2">
-                        <Label htmlFor="nama_lengkap">Nama Lengkap</Label>
+                        <Label htmlFor="nama_lengkap" className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">Nama Lengkap</Label>
                         <Input
                             id="nama_lengkap"
                             type="text"
@@ -53,44 +53,49 @@ export default function Register() {
                             onChange={(e) => setData('nama_lengkap', e.target.value)}
                             disabled={processing}
                             placeholder="Nama Lengkap sesuai KTP"
+                            className="rounded-xl"
                         />
                         <InputError message={errors.nama_lengkap} className="mt-2" />
                     </div>
 
-                    <div className="grid gap-2">
-                        <Label htmlFor="name">Username</Label>
-                        <Input
-                            id="name"
-                            type="text"
-                            required
-                            tabIndex={2}
-                            autoComplete="username"
-                            value={data.name}
-                            onChange={(e) => setData('name', e.target.value)}
-                            disabled={processing}
-                            placeholder="Username (tidak mengandung spasi)"
-                        />
-                        <InputError message={errors.name} className="mt-2" />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="name" className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">Username</Label>
+                            <Input
+                                id="name"
+                                type="text"
+                                required
+                                tabIndex={2}
+                                autoComplete="username"
+                                value={data.name}
+                                onChange={(e) => setData('name', e.target.value)}
+                                disabled={processing}
+                                placeholder="Username"
+                                className="rounded-xl"
+                            />
+                            <InputError message={errors.name} className="mt-2" />
+                        </div>
+
+                        <div className="grid gap-2">
+                            <Label htmlFor="nim" className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">NIM</Label>
+                            <Input
+                                id="nim"
+                                type="text"
+                                required
+                                tabIndex={3}
+                                autoComplete="off"
+                                value={data.nim}
+                                onChange={(e) => setData('nim', e.target.value)}
+                                disabled={processing}
+                                placeholder="Nomor Induk Mahasiswa"
+                                className="rounded-xl"
+                            />
+                            <InputError message={errors.nim} className="mt-2" />
+                        </div>
                     </div>
 
                     <div className="grid gap-2">
-                        <Label htmlFor="nim">NIM</Label>
-                        <Input
-                            id="nim"
-                            type="text"
-                            required
-                            tabIndex={3}
-                            autoComplete="off"
-                            value={data.nim}
-                            onChange={(e) => setData('nim', e.target.value)}
-                            disabled={processing}
-                            placeholder="Nomor Induk Mahasiswa"
-                        />
-                        <InputError message={errors.nim} className="mt-2" />
-                    </div>
-
-                    <div className="grid gap-2">
-                        <Label htmlFor="email">Email</Label>
+                        <Label htmlFor="email" className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">Email</Label>
                         <Input
                             id="email"
                             type="email"
@@ -101,52 +106,57 @@ export default function Register() {
                             onChange={(e) => setData('email', e.target.value)}
                             disabled={processing}
                             placeholder="email@example.com"
+                            className="rounded-xl"
                         />
                         <InputError message={errors.email} />
                     </div>
 
-                    <div className="grid gap-2">
-                        <Label htmlFor="password">Password</Label>
-                        <Input
-                            id="password"
-                            type="password"
-                            required
-                            tabIndex={5}
-                            autoComplete="new-password"
-                            value={data.password}
-                            onChange={(e) => setData('password', e.target.value)}
-                            disabled={processing}
-                            placeholder="Password"
-                        />
-                        <InputError message={errors.password} />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="password" title="password label" className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">Password</Label>
+                            <Input
+                                id="password"
+                                type="password"
+                                required
+                                tabIndex={5}
+                                autoComplete="new-password"
+                                value={data.password}
+                                onChange={(e) => setData('password', e.target.value)}
+                                disabled={processing}
+                                placeholder="Password"
+                                className="rounded-xl"
+                            />
+                            <InputError message={errors.password} />
+                        </div>
+
+                        <div className="grid gap-2">
+                            <Label htmlFor="password_confirmation" className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">Konfirmasi</Label>
+                            <Input
+                                id="password_confirmation"
+                                type="password"
+                                required
+                                tabIndex={6}
+                                autoComplete="new-password"
+                                value={data.password_confirmation}
+                                onChange={(e) => setData('password_confirmation', e.target.value)}
+                                disabled={processing}
+                                placeholder="Ulangi password"
+                                className="rounded-xl"
+                            />
+                            <InputError message={errors.password_confirmation} />
+                        </div>
                     </div>
 
-                    <div className="grid gap-2">
-                        <Label htmlFor="password_confirmation">Konfirmasi Password</Label>
-                        <Input
-                            id="password_confirmation"
-                            type="password"
-                            required
-                            tabIndex={6}
-                            autoComplete="new-password"
-                            value={data.password_confirmation}
-                            onChange={(e) => setData('password_confirmation', e.target.value)}
-                            disabled={processing}
-                            placeholder="Ulangi password"
-                        />
-                        <InputError message={errors.password_confirmation} />
-                    </div>
-
-                    <Button type="submit" className="mt-2 w-full" tabIndex={7} disabled={processing}>
+                    <Button type="submit" className="mt-4 w-full rounded-full h-11 font-bold shadow-lg shadow-primary/20" tabIndex={7} disabled={processing}>
                         {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
-                        Buat Akun
+                        Buat Akun Sekarang
                     </Button>
                 </div>
 
                 <div className="text-muted-foreground text-center text-sm">
                     Sudah punya akun?{' '}
-                    <TextLink href={route('login')} tabIndex={8}>
-                        Masuk
+                    <TextLink href={route('login')} className="font-bold underline underline-offset-4 decoration-primary/30 hover:decoration-primary" tabIndex={8}>
+                        Masuk Disini
                     </TextLink>
                 </div>
             </form>

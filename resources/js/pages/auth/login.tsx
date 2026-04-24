@@ -42,7 +42,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
             <form className="flex flex-col gap-6" onSubmit={submit}>
                 <div className="grid gap-6">
                     <div className="grid gap-2">
-                        <Label htmlFor="login">Email / NIM</Label>
+                        <Label htmlFor="login" className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">Email / NIM</Label>
                         <Input
                             id="login"
                             type="text"
@@ -52,16 +52,17 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                             autoComplete="username"
                             value={data.login}
                             onChange={(e) => setData('login', e.target.value)}
-                            placeholder="email@example.com atau 1234567890"
+                            placeholder="Email atau NIM"
+                            className="rounded-xl"
                         />
                         <InputError message={errors.login} />
                     </div>
 
                     <div className="grid gap-2">
-                        <div className="flex items-center">
-                            <Label htmlFor="password">Password</Label>
+                        <div className="flex items-center ml-1">
+                            <Label htmlFor="password" title="password label" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Password</Label>
                             {canResetPassword && (
-                                <TextLink href={route('password.request')} className="ml-auto text-sm" tabIndex={5}>
+                                <TextLink href={route('password.request')} className="ml-auto text-xs font-medium" tabIndex={5}>
                                     Lupa password?
                                 </TextLink>
                             )}
@@ -74,32 +75,33 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                             autoComplete="current-password"
                             value={data.password}
                             onChange={(e) => setData('password', e.target.value)}
-                            placeholder="Password"
+                            placeholder="Masukkan password"
+                            className="rounded-xl"
                         />
                         <InputError message={errors.password} />
                     </div>
 
-                    <div className="flex items-center space-x-3">
+                    <div className="flex items-center space-x-3 ml-1">
                         <Checkbox
                             id="remember"
                             name="remember"
                             checked={data.remember}
-                            onClick={() => setData('remember', !data.remember)}
+                            onCheckedChange={(checked) => setData('remember', checked === true)}
                             tabIndex={3}
                         />
-                        <Label htmlFor="remember">Ingat saya</Label>
+                        <Label htmlFor="remember" className="text-sm font-medium">Ingat saya</Label>
                     </div>
 
-                    <Button type="submit" className="mt-4 w-full" tabIndex={4} disabled={processing}>
+                    <Button type="submit" className="mt-4 w-full rounded-full h-11 font-bold shadow-lg shadow-primary/20" tabIndex={4} disabled={processing}>
                         {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
-                        Masuk
+                        Masuk Sekarang
                     </Button>
                 </div>
 
                 <div className="text-muted-foreground text-center text-sm">
                     Belum punya akun?{' '}
-                    <TextLink href={route('register')} tabIndex={5}>
-                        Daftar sekarang
+                    <TextLink href={route('register')} className="font-bold underline underline-offset-4 decoration-primary/30 hover:decoration-primary" tabIndex={5}>
+                        Daftar Gratis
                     </TextLink>
                 </div>
             </form>
