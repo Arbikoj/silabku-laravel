@@ -240,7 +240,7 @@ export default function BapIndex({ jadwalPraktikums, bapProgress }: BapPageProps
         <AppLayout breadcrumbs={[{ title: 'Berita Acara Praktikum', href: '/bap' }]}>
             <Head title="BAP Asisten" />
             
-            <div className="flex h-full w-full flex-col gap-6 p-6 mx-auto max-w-5xl">
+            <div className="p-6 flex flex-col gap-6">
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight mb-2">Berita Acara Praktikum (BAP)</h1>
                     <p className="text-muted-foreground">
