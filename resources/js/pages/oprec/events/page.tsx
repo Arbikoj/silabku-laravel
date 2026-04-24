@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import AppLayout from '@/layouts/app-layout';
 import api from '@/lib/api';
+import { formatDateIndonesia } from '@/lib/utils';
 import { BreadcrumbItem } from '@/types';
 import { Head, Link } from '@inertiajs/react';
 import { ArrowRight, Calendar, Clock, MapPin, Search } from 'lucide-react';
@@ -99,7 +100,7 @@ export default function OpenEventsPage() {
                                             <div className="p-1.5 bg-primary/5 rounded-md text-primary">
                                                 <Clock className="h-3.5 w-3.5" />
                                             </div>
-                                            <span>Berakhir: <span className="font-medium">{ev.tanggal_tutup || 'Tidak ditentukan'}</span></span>
+                                            <span>Berakhir: <span className="font-medium">{formatDateIndonesia(ev.tanggal_tutup)}</span></span>
                                         </div>
                                         <div className="text-muted-foreground flex items-center gap-2 text-xs">
                                             <div className="p-1.5 bg-indigo-500/5 rounded-md text-indigo-500">

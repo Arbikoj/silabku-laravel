@@ -1,6 +1,7 @@
 import { CenteredSpinner } from '@/components/centered-spinner';
 import AppLayout from '@/layouts/app-layout';
 import api from '@/lib/api';
+import { formatDateIndonesia, toLocalISO } from '@/lib/utils';
 import { BreadcrumbItem } from '@/types';
 import { Head, Link } from '@inertiajs/react';
 import { Plus, Pencil, Trash2, Calendar, Eye, Power } from 'lucide-react';
@@ -42,8 +43,8 @@ function EventModal({ open, onClose, onSaved, initial, semesters }: {
         if (initial) setForm({
             nama: initial.nama, tipe: initial.tipe, semester_id: initial.semester_id.toString(),
             is_open: initial.is_open, 
-            tanggal_buka: initial.tanggal_buka ? initial.tanggal_buka.split('T')[0] : '',
-            tanggal_tutup: initial.tanggal_tutup ? initial.tanggal_tutup.split('T')[0] : '', 
+            tanggal_buka: toLocalISO(initial.tanggal_buka),
+            tanggal_tutup: toLocalISO(initial.tanggal_tutup), 
             deskripsi: initial.deskripsi ?? ''
         });
         else setForm({
@@ -54,7 +55,12 @@ function EventModal({ open, onClose, onSaved, initial, semesters }: {
 
     const submit = async () => {
         try {
-            const data = { ...form, is_open: !!form.is_open };
+            const data = { 
+                ...form, 
+                is_open: !!form.is_open,
+                tanggal_buka: form.tanggal_buka || null,
+                tanggal_tutup: form.tanggal_tutup || null,
+            };
             if (initial) await api.put(`/events/${initial.id}`, data);
             else await api.post('/events', data);
             toast.success('Event berhasil disimpan');
@@ -101,11 +107,11 @@ function EventModal({ open, onClose, onSaved, initial, semesters }: {
                     <div className="grid grid-cols-2 gap-3">
                         <div className="grid gap-1">
                             <Label>Tgl Buka</Label>
-                            <Input type="date" value={form.tanggal_buka} onChange={e => setForm(f => ({ ...f, tanggal_buka: e.target.value }))} />
+                            <Input type="datetime-local" value={form.tanggal_buka} onChange={e => setForm(f => ({ ...f, tanggal_buka: e.target.value }))} />
                         </div>
                         <div className="grid gap-1">
                             <Label>Tgl Tutup</Label>
-                            <Input type="date" value={form.tanggal_tutup} onChange={e => setForm(f => ({ ...f, tanggal_tutup: e.target.value }))} />
+                            <Input type="datetime-local" value={form.tanggal_tutup} onChange={e => setForm(f => ({ ...f, tanggal_tutup: e.target.value }))} />
                         </div>
                     </div>
                     <div className="grid gap-1">
@@ -174,8 +180,8 @@ export default function EventAdminPage() {
                             <h3 className="font-bold text-lg leading-tight mb-1">{ev.nama}</h3>
                             <p className="text-sm text-muted-foreground mb-3">{ev.semester.nama}</p>
                             <div className="text-xs text-muted-foreground flex flex-col gap-1 mb-4">
-                                <span>Buka: {ev.tanggal_buka || '-'}</span>
-                                <span>Tutup: {ev.tanggal_tutup || '-'}</span>
+                                <span>Buka: {formatDateIndonesia(ev.tanggal_buka)}</span>
+                                <span>Tutup: {formatDateIndonesia(ev.tanggal_tutup)}</span>
                             </div>
                             <div className="flex gap-2">
                                 <Button asChild size="sm" variant="outline" className="flex-1"><Link href={`/admin/events/${ev.id}`}><Eye className="h-3 w-3 mr-1" /> Detail</Link></Button>

@@ -31,3 +31,40 @@ export function getContrastColor(hexColor: string) {
     // Return dark gray for light backgrounds, white for dark backgrounds
     return yiq >= 128 ? '#1a1a1a' : '#ffffff';
 }
+
+export function formatDateIndonesia(dateString: string | null | undefined) {
+    if (!dateString) return '-';
+    try {
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return '-';
+        return new Intl.DateTimeFormat('id-ID', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false,
+        }).format(date) + ' WIB';
+    } catch {
+        return '-';
+    }
+}
+
+export function toLocalISO(dateString: string | null | undefined): string {
+    if (!dateString) return '';
+    try {
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return '';
+        
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const mins = String(date.getMinutes()).padStart(2, '0');
+        
+        return `${year}-${month}-${day}T${hours}:${mins}`;
+    } catch {
+        return '';
+    }
+}
+
