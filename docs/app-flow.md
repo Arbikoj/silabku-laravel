@@ -21,6 +21,12 @@ Domain utama aplikasi berfokus pada:
 
 Dokumen ini disusun berdasarkan implementasi aktual pada route, controller, model, migration, middleware, dan halaman frontend yang ada di repo saat ini.
 
+### Dokumen pendukung kebutuhan (untuk laporan)
+
+Untuk artefak tahap **identifikasi kebutuhan sistem** (daftar FR/NFR terukur, flow proses, wireframe), lihat:
+
+- `docs/identifikasi-kebutuhan-sistem.md`
+
 ---
 
 ## 2. Arsitektur Aplikasi

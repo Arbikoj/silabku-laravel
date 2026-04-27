@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="860" viewBox="0 0 1200 860">
+  <defs>
+    <style>
+      .bg { fill: #ffffff; }
+      .frame { fill: none; stroke: #111827; stroke-width: 2; }
+      .muted { fill: #f3f4f6; stroke: #9ca3af; stroke-width: 1.5; }
+      .box { fill: #ffffff; stroke: #9ca3af; stroke-width: 1.5; }
+      .title { font: 700 20px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; fill: #111827; }
+      .label { font: 600 14px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; fill: #111827; }
+      .text { font: 400 13px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; fill: #374151; }
+      .btn { fill: #111827; }
+      .btnText { font: 700 12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; fill: #ffffff; }
+      .btn2 { fill: #ffffff; stroke: #111827; stroke-width: 1.5; }
+      .btn2Text { font: 700 12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; fill: #111827; }
+      .pill { fill: #e5e7eb; stroke: #9ca3af; stroke-width: 1; }
+    </style>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="1200" height="860"/>
+  <rect class="frame" x="20" y="20" width="1160" height="820" rx="10"/>
+
+  <!-- Header -->
+  <rect class="muted" x="20" y="20" width="1160" height="64" rx="10"/>
+  <text class="title" x="46" y="60">Silabku — BAP (Asisten)</text>
+
+  <!-- Left: list jadwal -->
+  <rect class="box" x="20" y="94" width="360" height="746" rx="10"/>
+  <text class="label" x="46" y="126">Daftar Jadwal (approved)</text>
+  <rect class="muted" x="46" y="140" width="308" height="28" rx="8"/>
+  <text class="text" x="56" y="158">Cari MK/Kelas…</text>
+
+  <rect class="box" x="46" y="184" width="308" height="84" rx="10"/>
+  <text class="label" x="60" y="214">Algoritma — Kelas A</text>
+  <text class="text" x="60" y="238">Lab: Lab 1 • Senin</text>
+  <text class="text" x="60" y="260">08:00–10:00 • Semester: Gasal 2026</text>
+
+  <rect class="box" x="46" y="278" width="308" height="84" rx="10"/>
+  <text class="label" x="60" y="308">Struktur Data — Kelas B</text>
+  <text class="text" x="60" y="332">Lab: Lab 2 • Rabu</text>
+  <text class="text" x="60" y="354">10:00–12:00 • Semester: Gasal 2026</text>
+
+  <rect class="muted" x="46" y="384" width="308" height="120" rx="10"/>
+  <text class="label" x="60" y="414">Progress BAP</text>
+  <text class="text" x="60" y="438">- Pertemuan terisi: 6/10</text>
+  <text class="text" x="60" y="460">- Dokumen Google Docs: tersedia</text>
+  <rect class="btn2" x="60" y="474" width="168" height="26" rx="8"/>
+  <text class="btn2Text" x="78" y="492">Buka Dokumen BAP</text>
+
+  <!-- Right: form -->
+  <rect class="box" x="400" y="94" width="780" height="746" rx="10"/>
+  <text class="label" x="426" y="126">Form Input Pertemuan</text>
+
+  <!-- Form fields -->
+  <rect class="muted" x="426" y="144" width="240" height="28" rx="8"/>
+  <text class="text" x="436" y="162">Pertemuan ke (1..N)</text>
+  <rect class="muted" x="678" y="144" width="240" height="28" rx="8"/>
+  <text class="text" x="688" y="162">Tanggal</text>
+  <rect class="muted" x="930" y="144" width="224" height="28" rx="8"/>
+  <text class="text" x="940" y="162">Status (LURING/DARING)</text>
+
+  <rect class="muted" x="426" y="184" width="728" height="28" rx="8"/>
+  <text class="text" x="436" y="202">Topik / Materi praktikum</text>
+
+  <rect class="muted" x="426" y="224" width="240" height="28" rx="8"/>
+  <text class="text" x="436" y="242">Jumlah hadir</text>
+  <rect class="muted" x="678" y="224" width="240" height="28" rx="8"/>
+  <text class="text" x="688" y="242">Jumlah tidak hadir</text>
+  <rect class="muted" x="930" y="224" width="224" height="28" rx="8"/>
+  <text class="text" x="940" y="242">Dosen PJ (opsional)</text>
+
+  <text class="label" x="426" y="290">Upload dokumentasi (foto)</text>
+  <rect class="box" x="426" y="302" width="236" height="92" rx="10"/>
+  <text class="text" x="438" y="332">Foto 1 (jpg/png)</text>
+  <rect class="box" x="670" y="302" width="236" height="92" rx="10"/>
+  <text class="text" x="682" y="332">Foto 2 (jpg/png)</text>
+  <rect class="box" x="914" y="302" width="240" height="92" rx="10"/>
+  <text class="text" x="926" y="332">Foto 3 (jpg/png)</text>
+
+  <rect class="btn" x="426" y="410" width="160" height="40" rx="10"/>
+  <text class="btnText" x="456" y="436">Simpan Pertemuan</text>
+  <rect class="btn2" x="594" y="410" width="210" height="40" rx="10"/>
+  <text class="btn2Text" x="618" y="436">Generate Dokumen BAP</text>
+
+  <!-- Meeting list -->
+  <text class="label" x="426" y="492">Daftar pertemuan tersimpan</text>
+  <rect class="muted" x="426" y="506" width="728" height="34" rx="8"/>
+  <text class="label" x="440" y="528">#</text>
+  <text class="label" x="490" y="528">Tanggal</text>
+  <text class="label" x="620" y="528">Topik</text>
+  <text class="label" x="980" y="528">Aksi</text>
+
+  <rect class="box" x="426" y="548" width="728" height="44" rx="8"/>
+  <text class="text" x="440" y="576">6</text>
+  <text class="text" x="490" y="576">Senin, 20 Apr 2026</text>
+  <text class="text" x="620" y="576">Pointer, Array, dan Loop</text>
+  <rect class="btn2" x="980" y="560" width="80" height="26" rx="8"/>
+  <text class="btn2Text" x="1000" y="578">Edit</text>
+  <rect class="btn2" x="1068" y="560" width="86" height="26" rx="8"/>
+  <text class="btn2Text" x="1088" y="578">Hapus</text>
+
+  <rect class="pill" x="426" y="614" width="728" height="60" rx="10"/>
+  <text class="text" x="446" y="642">Catatan: batas maksimum pertemuan mengikuti `pertemuan_praktikum` pada Mata Kuliah.</text>
+  <text class="text" x="446" y="664">Generate akan membuat Google Docs dan menyimpan `bap_document_id`.</text>
+</svg>
+

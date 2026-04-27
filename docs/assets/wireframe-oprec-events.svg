@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760">
+  <defs>
+    <style>
+      .bg { fill: #ffffff; }
+      .frame { fill: none; stroke: #111827; stroke-width: 2; }
+      .muted { fill: #f3f4f6; stroke: #9ca3af; stroke-width: 1.5; }
+      .box { fill: #ffffff; stroke: #9ca3af; stroke-width: 1.5; }
+      .title { font: 700 20px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; fill: #111827; }
+      .label { font: 600 14px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; fill: #111827; }
+      .text { font: 400 13px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; fill: #374151; }
+      .chip { fill: #e5e7eb; stroke: #9ca3af; stroke-width: 1; }
+      .btn { fill: #111827; }
+      .btnText { font: 700 12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; fill: #ffffff; }
+      .btn2 { fill: #ffffff; stroke: #111827; stroke-width: 1.5; }
+      .btn2Text { font: 700 12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; fill: #111827; }
+    </style>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="1200" height="760"/>
+  <rect class="frame" x="20" y="20" width="1160" height="720" rx="10"/>
+
+  <!-- Header -->
+  <rect class="muted" x="20" y="20" width="1160" height="64" rx="10"/>
+  <text class="title" x="46" y="60">Silabku — Event Terbuka (Mahasiswa)</text>
+  <rect class="chip" x="980" y="36" width="180" height="32" rx="16"/>
+  <text class="text" x="1000" y="57">User: NIM / Nama</text>
+
+  <!-- Sidebar -->
+  <rect class="muted" x="20" y="84" width="220" height="656" rx="10"/>
+  <text class="label" x="44" y="122">Menu</text>
+  <rect class="box" x="40" y="140" width="180" height="34" rx="8"/>
+  <text class="text" x="54" y="162">Dashboard</text>
+  <rect class="box" x="40" y="184" width="180" height="34" rx="8"/>
+  <text class="text" x="54" y="206">Profil Asisten</text>
+  <rect class="box" x="40" y="228" width="180" height="34" rx="8"/>
+  <text class="text" x="54" y="250">Event Terbuka</text>
+  <rect class="box" x="40" y="272" width="180" height="34" rx="8"/>
+  <text class="text" x="54" y="294">Pendaftaran Saya</text>
+  <rect class="box" x="40" y="316" width="180" height="34" rx="8"/>
+  <text class="text" x="54" y="338">Sertifikat</text>
+
+  <!-- Content -->
+  <rect class="box" x="260" y="100" width="900" height="70" rx="10"/>
+  <text class="label" x="284" y="128">Filter</text>
+  <rect class="muted" x="284" y="138" width="260" height="24" rx="8"/>
+  <text class="text" x="294" y="155">Cari event / semester / tipe…</text>
+  <rect class="btn2" x="1060" y="132" width="80" height="30" rx="8"/>
+  <text class="btn2Text" x="1080" y="152">Cari</text>
+
+  <!-- Event cards -->
+  <text class="label" x="260" y="210">Daftar event terbuka</text>
+
+  <rect class="box" x="260" y="230" width="900" height="140" rx="10"/>
+  <text class="label" x="284" y="262">Event: Oprec Asisten Praktikum (Gasal 2026)</text>
+  <text class="text" x="284" y="286">Periode: 01–07 Mei 2026 • Tipe: praktikum • Status: OPEN</text>
+  <text class="text" x="284" y="310">Pilihan mata kuliah + kelas (lihat kuota):</text>
+  <rect class="muted" x="284" y="322" width="560" height="32" rx="8"/>
+  <text class="text" x="296" y="343">Algoritma (A) — kuota 4 • approved 2 • sisa 2</text>
+  <rect class="btn" x="1040" y="322" width="120" height="36" rx="10"/>
+  <text class="btnText" x="1062" y="345">Daftar / Apply</text>
+
+  <rect class="box" x="260" y="390" width="900" height="140" rx="10"/>
+  <text class="label" x="284" y="422">Event: Oprec Asisten Tutorial (Gasal 2026)</text>
+  <text class="text" x="284" y="446">Periode: 02–10 Mei 2026 • Tipe: tutorial • Status: OPEN</text>
+  <rect class="muted" x="284" y="482" width="560" height="32" rx="8"/>
+  <text class="text" x="296" y="503">Struktur Data (B) — kuota 3 • approved 3 • sisa 0 (penuh)</text>
+  <rect class="btn2" x="1040" y="482" width="120" height="36" rx="10"/>
+  <text class="btn2Text" x="1058" y="505">Detail Kuota</text>
+
+  <!-- Apply modal -->
+  <rect class="muted" x="320" y="548" width="840" height="172" rx="12"/>
+  <text class="label" x="344" y="578">Modal: Form Pendaftaran</text>
+  <text class="text" x="344" y="602">Pilih mata kuliah + kelas (1..n), input nilai, unggah SPTJM (Drive), submit.</text>
+  <rect class="box" x="344" y="616" width="620" height="34" rx="8"/>
+  <text class="text" x="356" y="638">[dropdown] MK+Kelas • [input] Nilai • [upload] SPTJM</text>
+  <rect class="btn" x="1000" y="616" width="140" height="40" rx="10"/>
+  <text class="btnText" x="1020" y="642">Kirim Pendaftaran</text>
+</svg>
+

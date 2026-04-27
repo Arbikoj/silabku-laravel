@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="520" viewBox="0 0 1200 520">
+  <defs>
+    <style>
+      .bg { fill: #ffffff; }
+      .frame { fill: none; stroke: #111827; stroke-width: 2; }
+      .box { fill: #ffffff; stroke: #9ca3af; stroke-width: 1.5; }
+      .step { fill: #f3f4f6; stroke: #9ca3af; stroke-width: 1.5; }
+      .title { font: 700 20px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; fill: #111827; }
+      .label { font: 700 13px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; fill: #111827; }
+      .text { font: 400 13px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; fill: #374151; }
+      .role { font: 700 12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; fill: #1f2937; }
+      .arrow { stroke: #111827; stroke-width: 2; fill: none; }
+      .hint { font: 400 12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; fill: #6b7280; }
+      .pill { fill: #e5e7eb; stroke: #9ca3af; stroke-width: 1; }
+    </style>
+    <marker id="arrowHead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <path d="M0,0 L10,3 L0,6 Z" fill="#111827"/>
+    </marker>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="1200" height="520"/>
+  <rect class="frame" x="20" y="20" width="1160" height="480" rx="10"/>
+  <text class="title" x="46" y="58">Alur Sertifikat — Upload Template → Konfigurasi → Generate → View</text>
+
+  <!-- Swimlane labels -->
+  <rect class="pill" x="46" y="82" width="320" height="26" rx="13"/>
+  <text class="role" x="60" y="100">Admin / Dosen</text>
+  <rect class="pill" x="392" y="82" width="320" height="26" rx="13"/>
+  <text class="role" x="406" y="100">Sistem (Silabku + Google Drive)</text>
+  <rect class="pill" x="738" y="82" width="320" height="26" rx="13"/>
+  <text class="role" x="752" y="100">Mahasiswa / Asisten</text>
+
+  <!-- Steps row -->
+  <!-- Step 1 -->
+  <rect class="step" x="46" y="140" width="320" height="90" rx="12"/>
+  <text class="label" x="66" y="170">1) Upload template PDF</text>
+  <text class="text" x="66" y="194">Template per event (private)</text>
+  <text class="hint" x="66" y="216">`/api/sertifikat/upload-template`</text>
+
+  <!-- arrow 1 -->
+  <path class="arrow" d="M366 185 L392 185" marker-end="url(#arrowHead)"/>
+
+  <!-- Step 2 -->
+  <rect class="step" x="392" y="140" width="320" height="90" rx="12"/>
+  <text class="label" x="412" y="170">2) Simpan template</text>
+  <text class="text" x="412" y="194">Validasi PDF, simpan di storage private</text>
+  <text class="hint" x="412" y="216">`template.pdf` per `event_id`</text>
+
+  <!-- arrow 2 -->
+  <path class="arrow" d="M712 185 L738 185" marker-end="url(#arrowHead)"/>
+
+  <!-- Step 3 -->
+  <rect class="step" x="738" y="140" width="320" height="90" rx="12"/>
+  <text class="label" x="758" y="170">3) (Opsional) Preview template</text>
+  <text class="text" x="758" y="194">Pastikan template sesuai</text>
+  <text class="hint" x="758" y="216">`/api/sertifikat/preview-template`</text>
+
+  <!-- Second row -->
+  <rect class="step" x="46" y="260" width="320" height="100" rx="12"/>
+  <text class="label" x="66" y="292">4) Konfigurasi posisi teks</text>
+  <text class="text" x="66" y="316">Nama, nomor, mata kuliah, custom</text>
+  <text class="hint" x="66" y="338">`/api/sertifikat/save-config`</text>
+
+  <path class="arrow" d="M366 310 L392 310" marker-end="url(#arrowHead)"/>
+
+  <rect class="step" x="392" y="260" width="320" height="100" rx="12"/>
+  <text class="label" x="412" y="292">5) Simpan config per event</text>
+  <text class="text" x="412" y="316">Tersimpan sebagai `config.json`</text>
+  <text class="hint" x="412" y="338">`/api/sertifikat/get-config`</text>
+
+  <path class="arrow" d="M712 310 L738 310" marker-end="url(#arrowHead)"/>
+
+  <rect class="step" x="738" y="260" width="320" height="100" rx="12"/>
+  <text class="label" x="758" y="292">6) Prepare data penerima</text>
+  <text class="text" x="758" y="316">Daftar asisten approved + nomor urut</text>
+  <text class="hint" x="758" y="338">`/api/sertifikat/prepare-data`</text>
+
+  <!-- Third row -->
+  <rect class="step" x="46" y="392" width="320" height="86" rx="12"/>
+  <text class="label" x="66" y="422">7) Generate sertifikat</text>
+  <text class="text" x="66" y="446">Proses batch per event</text>
+  <text class="hint" x="66" y="468">`/api/sertifikat/generate`</text>
+
+  <path class="arrow" d="M366 435 L392 435" marker-end="url(#arrowHead)"/>
+
+  <rect class="step" x="392" y="392" width="320" height="86" rx="12"/>
+  <text class="label" x="412" y="422">8) Render + upload ke Drive</text>
+  <text class="text" x="412" y="446">Simpan metadata penerbitan</text>
+  <text class="hint" x="412" y="468">Tabel `sertifikat_penerbitan`</text>
+
+  <path class="arrow" d="M712 435 L738 435" marker-end="url(#arrowHead)"/>
+
+  <rect class="step" x="738" y="392" width="320" height="86" rx="12"/>
+  <text class="label" x="758" y="422">9) Mahasiswa melihat sertifikat</text>
+  <text class="text" x="758" y="446">List + redirect preview Drive</text>
+  <text class="hint" x="758" y="468">`/api/sertifikat/my` + `/sertifikat/{id}/view`</text>
+</svg>
+
