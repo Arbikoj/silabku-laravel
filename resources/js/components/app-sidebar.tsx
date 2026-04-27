@@ -19,6 +19,7 @@ import {
     CalendarDays,
     CalendarRangeIcon,
     LucideCalendarRange,
+    ClipboardCheck,
 } from 'lucide-react';
 import AppLogo from './app-logo';
 import { NavDropdown } from './nav-dropdown';
@@ -134,9 +135,18 @@ export function AppSidebar() {
 
     const bapMonitoringItems: DropdownItem[] = [
         {
-            title: 'Dokumen BAP',
+            title: 'Monitoring BAP',
             url: '/bap/monitoring',
             icon: BookOpen,
+            isActive: true,
+        },
+    ];
+
+    const absensiItems: DropdownItem[] = [
+        {
+            title: 'Absensi Asisten',
+            url: '/absensi',
+            icon: ClipboardCheck,
             isActive: true,
         },
     ];
@@ -166,6 +176,7 @@ export function AppSidebar() {
         ...((role === 'admin' || role === 'dosen') ? seleksiItems : []),
         ...((role === 'admin' || role === 'dosen') ? databaseItems : []),
         ...((role === 'admin' || role === 'dosen') ? bapMonitoringItems : []),
+        ...((role === 'admin' || role === 'dosen') ? absensiItems : []),
         ...((role === 'admin' || role === 'dosen') ? sertifikatItems : []),
     ];
 

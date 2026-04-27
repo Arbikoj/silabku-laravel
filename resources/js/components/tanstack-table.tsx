@@ -2,6 +2,7 @@ import { CenteredSpinner } from '@/components/centered-spinner';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DataTableProps } from '@/interface/TableProps';
 import { flexRender, getCoreRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table';
+import type { SortingState } from '@tanstack/react-table';
 import { ArrowLeft, ArrowRight, ChevronDown, ChevronUp, MoreHorizontal } from 'lucide-react';
 import { Button } from './ui/button';
 
@@ -14,6 +15,8 @@ interface ServerSideDataTableProps<TData, TValue> extends DataTableProps<TData, 
     pagination: PaginationState;
     onPaginationChange: (updater: PaginationState | ((prev: PaginationState) => PaginationState)) => void;
     pageCount: number;
+    sorting?: SortingState;
+    onSortingChange?: (updater: SortingState | ((prev: SortingState) => SortingState)) => void;
 }
 
 export function DataTable<TData, TValue>({
@@ -23,7 +26,7 @@ export function DataTable<TData, TValue>({
     pagination,
     onPaginationChange,
     pageCount,
-    sorting,
+    sorting = [],
     onSortingChange,
 }: ServerSideDataTableProps<TData, TValue>) {
     const table = useReactTable({
@@ -38,7 +41,7 @@ export function DataTable<TData, TValue>({
         },
         onPaginationChange,
         getCoreRowModel: getCoreRowModel(),
-        onSortingChange,
+        onSortingChange: onSortingChange ?? (() => {}),
         getSortedRowModel: getSortedRowModel(),
     });
 
@@ -101,28 +104,38 @@ export function DataTable<TData, TValue>({
                         <TableHeader>
                             {table.getHeaderGroups().map((headerGroup) => (
                                 <TableRow key={headerGroup.id}>
-                                    {headerGroup.headers.map((header) => (
-                                        <TableHead
-                                            key={header.id}
-                                            style={{ cursor: header.column.getCanSort() ? 'pointer' : 'default' }}
-                                            onClick={header.column.getToggleSortingHandler()}
-                                        >
-                                            <div className="flex items-center gap-1">
-                                                {flexRender(header.column.columnDef.header, header.getContext())}
-                                                {{
-                                                    asc: <ChevronUp size={14} />,
-                                                    desc: <ChevronDown size={14} />,
-                                                }[header.column.getIsSorted() as string] ?? null}
-                                            </div>
-                                        </TableHead>
-                                    ))}
+                                    {headerGroup.headers.map((header) => {
+                                        if (header.isPlaceholder) return null;
+
+                                        const headerRowCount = table.getHeaderGroups().length;
+                                        const shouldRowSpan =
+                                            headerRowCount > 1 && header.depth === 0 && header.colSpan === 1 && header.subHeaders.length === 0;
+                                        const rowSpan = shouldRowSpan ? headerRowCount : undefined;
+
+                                        return (
+                                            <TableHead
+                                                key={header.id}
+                                                rowSpan={rowSpan}
+                                                style={{ cursor: header.column.getCanSort() ? 'pointer' : 'default' }}
+                                                onClick={header.column.getToggleSortingHandler()}
+                                            >
+                                                <div className="flex items-center gap-1">
+                                                    {flexRender(header.column.columnDef.header, header.getContext())}
+                                                    {{
+                                                        asc: <ChevronUp size={14} />,
+                                                        desc: <ChevronDown size={14} />,
+                                                    }[header.column.getIsSorted() as string] ?? null}
+                                                </div>
+                                            </TableHead>
+                                        );
+                                    })}
                                 </TableRow>
                             ))}
                         </TableHeader>
                         <TableBody>
                             {table.getRowModel().rows.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={columns.length} className="text-muted-foreground py-6 text-center text-sm">
+                                    <TableCell colSpan={table.getVisibleLeafColumns().length} className="text-muted-foreground py-6 text-center text-sm">
                                         Data kosong
                                     </TableCell>
                                 </TableRow>

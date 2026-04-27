@@ -70,6 +70,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/monitoring', fn() => Inertia::render('database/bap/page'))->name('monitoring');
     });
 
+    // ── Absensi Asisten (admin + dosen) ────────────────────────────────
+    Route::get('/absensi', fn() => Inertia::render('absensi/page'))
+        ->middleware('role:admin,dosen')
+        ->name('absensi.index');
+
     // ── Sertifikat (Admin & Dosen) ───────────────────────────
     Route::prefix('sertifikat')->name('sertifikat.admin.')->middleware('role:admin,dosen')->group(function () {
         Route::get('/penerbitan', fn() => Inertia::render('sertifikat/penerbitan/page'))->name('penerbitan');
