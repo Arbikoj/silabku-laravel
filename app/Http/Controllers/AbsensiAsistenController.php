@@ -17,7 +17,8 @@ class AbsensiAsistenController extends Controller
         $validated = $request->validate([
             'event_id' => 'nullable|exists:events,id',
             'mata_kuliah_id' => 'nullable|exists:mata_kuliah,id',
-            'search' => 'nullable|string',
+            'kelas_id' => 'nullable|exists:kelas,id',
+            'nama' => 'nullable|string',
             'page' => 'nullable|integer|min:1',
             'per_page' => 'nullable|integer|min:1|max:200',
         ]);
@@ -56,19 +57,22 @@ class AbsensiAsistenController extends Controller
                 'eventMataKuliah.kelas',
             ]);
 
-        if (!empty($validated['search'])) {
-            $search = $validated['search'];
+        if (!empty($validated['kelas_id'])) {
+            $query->where('kelas.id', $validated['kelas_id']);
+        }
+
+        if (!empty($validated['nama'])) {
+            $search = $validated['nama'];
             $query->where(function ($q) use ($search) {
                 $q->where('users.name', 'like', '%' . $search . '%')
-                    ->orWhere('users.nim', 'like', '%' . $search . '%')
                     ->orWhere('profiles.nama_lengkap', 'like', '%' . $search . '%');
             });
         }
 
         $perPage = $validated['per_page'] ?? 20;
         $paginated = $query
-            ->orderByRaw("COALESCE(profiles.nama_lengkap, users.name) ASC")
             ->orderBy('kelas.nama', 'ASC')
+            ->orderByRaw("COALESCE(profiles.nama_lengkap, users.name) ASC")
             ->orderBy('users.nim', 'ASC')
             ->paginate($perPage);
 

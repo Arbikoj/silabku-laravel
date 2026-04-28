@@ -18,7 +18,7 @@ interface EventMataKuliahItem {
     id: number;
     mata_kuliah_id?: number | null;
     mata_kuliah?: { nama?: string; pertemuan_praktikum?: number } | null;
-    kelas?: { nama?: string } | null;
+    kelas?: { id: number; nama?: string } | null;
 }
 
 interface EventItem {
@@ -49,7 +49,8 @@ export default function AbsensiAsistenPage() {
     const [events, setEvents] = useState<EventItem[]>([]);
     const [eventId, setEventId] = useState('');
     const [mataKuliahId, setMataKuliahId] = useState('');
-    const [search, setSearch] = useState('');
+    const [kelasId, setKelasId] = useState('');
+    const [nama, setNama] = useState('');
     const [data, setData] = useState<AttendanceRow[]>([]);
     const [meta, setMeta] = useState<Meta>({ total: 0, current_page: 1, last_page: 1 });
     const [pertemuanMax, setPertemuanMax] = useState(0);
@@ -86,14 +87,37 @@ export default function AbsensiAsistenPage() {
 
     const currentMataKuliah = mataKuliahOptions.find((x) => x.id.toString() === mataKuliahId);
 
+    const kelasOptions = useMemo(() => {
+        const raw = currentEvent?.event_mata_kuliah ?? [];
+        const mkId = Number(mataKuliahId);
+        const map = new Map<number, { id: number; nama: string }>();
+
+        raw.forEach((item) => {
+            if (!mataKuliahId) return;
+            if (item.mata_kuliah_id !== mkId) return;
+            const kId = item.kelas?.id;
+            const kNama = item.kelas?.nama ?? '';
+            if (kId == null) return;
+            if (!map.has(kId)) map.set(kId, { id: kId, nama: kNama || `Kelas ${kId}` });
+        });
+
+        return Array.from(map.values()).sort((a, b) => a.nama.localeCompare(b.nama, 'id'));
+    }, [currentEvent, mataKuliahId]);
+
     useEffect(() => {
         if (!eventId) return;
         const nextEvent = events.find((e) => e.id.toString() === eventId);
         const nextEmk = nextEvent?.event_mata_kuliah?.[0];
         const nextMkId = nextEmk?.mata_kuliah_id;
         setMataKuliahId(nextMkId != null ? nextMkId.toString() : '');
+        setKelasId('');
         setPagination((p) => ({ ...p, pageIndex: 0 }));
     }, [eventId, events]);
+
+    useEffect(() => {
+        setKelasId('');
+        setPagination((p) => ({ ...p, pageIndex: 0 }));
+    }, [mataKuliahId]);
 
     const mapRow = (amk: any): AttendanceRow => {
         const rawAttendance = amk.attendance ?? {};
@@ -123,7 +147,8 @@ export default function AbsensiAsistenPage() {
             params: {
                 event_id: eventId,
                 mata_kuliah_id: mataKuliahId,
-                search: search || undefined,
+                kelas_id: kelasId || undefined,
+                nama: nama || undefined,
                 page: pagination.pageIndex + 1,
                 per_page: pagination.pageSize,
             },
@@ -135,7 +160,7 @@ export default function AbsensiAsistenPage() {
                 setPertemuanMax(r.data.pertemuan_max ?? 0);
             })
             .finally(() => setLoading(false));
-    }, [eventId, mataKuliahId, search, pagination.pageIndex, pagination.pageSize]);
+    }, [eventId, mataKuliahId, kelasId, nama, pagination.pageIndex, pagination.pageSize]);
 
     useEffect(() => {
         fetchData();
@@ -326,15 +351,39 @@ export default function AbsensiAsistenPage() {
                                 </SelectContent>
                             </Select>
 
+                            <Select
+                                value={kelasId}
+                                onValueChange={(v) => {
+                                    setKelasId(v);
+                                    setPagination((p) => ({ ...p, pageIndex: 0 }));
+                                }}
+                                disabled={!eventId || !mataKuliahId || kelasOptions.length === 0}
+                            >
+                                <SelectTrigger className="w-full md:w-[200px] overflow-hidden">
+                                    <Filter className="mr-2 h-4 w-4 text-muted-foreground shrink-0" />
+                                    <span className="truncate text-left flex-1 min-w-0">
+                                        <SelectValue placeholder="Semua Kelas" />
+                                    </span>
+                                </SelectTrigger>
+                                <SelectContent className="max-w-[260px]">
+                                    <SelectItem value="">Semua Kelas</SelectItem>
+                                    {kelasOptions.map((item) => (
+                                        <SelectItem key={item.id} value={item.id.toString()}>
+                                            <span className="block truncate max-w-[220px]">{item.nama}</span>
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+
                             <div className="relative w-full md:max-w-xs">
                                 <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                                 <Input
-                                    value={search}
+                                    value={nama}
                                     onChange={(e) => {
-                                        setSearch(e.target.value);
+                                        setNama(e.target.value);
                                         setPagination((p) => ({ ...p, pageIndex: 0 }));
                                     }}
-                                    placeholder="Cari nama atau NIM..."
+                                    placeholder="Cari nama..."
                                     className="pl-9"
                                 />
                             </div>
