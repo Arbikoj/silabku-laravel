@@ -49,7 +49,7 @@ export default function AbsensiAsistenPage() {
     const [events, setEvents] = useState<EventItem[]>([]);
     const [eventId, setEventId] = useState('');
     const [mataKuliahId, setMataKuliahId] = useState('');
-    const [kelasId, setKelasId] = useState('');
+    const [kelasId, setKelasId] = useState('all');
     const [nama, setNama] = useState('');
     const [data, setData] = useState<AttendanceRow[]>([]);
     const [meta, setMeta] = useState<Meta>({ total: 0, current_page: 1, last_page: 1 });
@@ -110,12 +110,12 @@ export default function AbsensiAsistenPage() {
         const nextEmk = nextEvent?.event_mata_kuliah?.[0];
         const nextMkId = nextEmk?.mata_kuliah_id;
         setMataKuliahId(nextMkId != null ? nextMkId.toString() : '');
-        setKelasId('');
+        setKelasId('all');
         setPagination((p) => ({ ...p, pageIndex: 0 }));
     }, [eventId, events]);
 
     useEffect(() => {
-        setKelasId('');
+        setKelasId('all');
         setPagination((p) => ({ ...p, pageIndex: 0 }));
     }, [mataKuliahId]);
 
@@ -147,7 +147,7 @@ export default function AbsensiAsistenPage() {
             params: {
                 event_id: eventId,
                 mata_kuliah_id: mataKuliahId,
-                kelas_id: kelasId || undefined,
+                kelas_id: kelasId === 'all' ? undefined : kelasId,
                 nama: nama || undefined,
                 page: pagination.pageIndex + 1,
                 per_page: pagination.pageSize,
@@ -366,7 +366,7 @@ export default function AbsensiAsistenPage() {
                                     </span>
                                 </SelectTrigger>
                                 <SelectContent className="max-w-[260px]">
-                                    <SelectItem value="">Semua Kelas</SelectItem>
+                                    <SelectItem value="all">Semua Kelas</SelectItem>
                                     {kelasOptions.map((item) => (
                                         <SelectItem key={item.id} value={item.id.toString()}>
                                             <span className="block truncate max-w-[220px]">{item.nama}</span>
