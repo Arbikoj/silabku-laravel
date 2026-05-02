@@ -333,6 +333,7 @@ class ApplicationController extends Controller
                             'nilai_mata_kuliah' => $choice->nilai_mata_kuliah,
                             'has_sptjm' => filled($choice->sptjm_gd_id),
                             'has_transkrip' => filled($choice->application?->user?->profile?->transkrip_gd_id),
+                            'has_cv' => filled($choice->application?->user?->profile?->cv_gd_id),
                             'no_wa' => $choice->application?->user?->profile?->no_wa,
                             'other_choices' => $otherChoices,
                         ];
@@ -403,6 +404,20 @@ class ApplicationController extends Controller
         }
 
         return Storage::disk('google')->response($transkripPath);
+    }
+
+    public function reviewerChoiceCv(ApplicationMataKuliah $choice)
+    {
+        $this->ensureReviewerDocumentAccess();
+
+        $choice->loadMissing('application.user.profile');
+        $cvPath = $choice->application?->user?->profile?->cv_gd_id;
+
+        if (!$cvPath) {
+            abort(404, 'CV tidak ditemukan');
+        }
+
+        return Storage::disk('google')->response($cvPath);
     }
 
     // ─── Admin/Dosen: list semua aplikasi ────────────────

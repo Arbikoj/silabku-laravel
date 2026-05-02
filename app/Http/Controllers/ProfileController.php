@@ -33,6 +33,7 @@ class ProfileController extends Controller
             'foto' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
             'transkrip' => ($profile && $profile->transkrip_gd_id) ? 'nullable|file|mimes:pdf|max:5120' : 'required|file|mimes:pdf|max:5120',
             'ktm' => ($profile && $profile->ktm_gd_id) ? 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120' : 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'cv' => ($profile && $profile->cv_gd_id) ? 'nullable|file|mimes:pdf|max:5120' : 'required|file|mimes:pdf|max:5120',
         ]);
 
         $profile = $profile ?? Profile::create(['user_id' => $user->id]);
@@ -77,6 +78,21 @@ class ProfileController extends Controller
             }
         }
 
+        if ($request->hasFile('cv')) {
+            try {
+                if ($profile->cv_gd_id && Storage::disk('google')->exists($profile->cv_gd_id)) {
+                    Storage::disk('google')->delete($profile->cv_gd_id);
+                }
+                $filename = $user->nim . '-' . \Illuminate\Support\Str::slug($user->name) . '-cv.pdf';
+                $path = $request->file('cv')->storeAs('Asisten/cv', $filename, 'google');
+                $data['cv_gd_id'] = $path;
+            } catch (\Exception $e) {
+                return response()->json([
+                    'message' => 'Gagal mengunggah CV ke Google Drive: Cek konfigurasi Service Account JSON / Folder ID.'
+                ], 500);
+            }
+        }
+
         $profile->update($data);
 
         return response()->json(['message' => 'Profil berhasil diperbarui', 'profile' => $profile]);
@@ -100,5 +116,15 @@ class ProfileController extends Controller
         }
 
         return Storage::disk('google')->response($profile->ktm_gd_id);
+    }
+
+    public function cv()
+    {
+        $profile = Auth::user()->profile;
+        if (!$profile || !$profile->cv_gd_id) {
+            abort(404, 'CV tidak ditemukan');
+        }
+
+        return Storage::disk('google')->response($profile->cv_gd_id);
     }
 }

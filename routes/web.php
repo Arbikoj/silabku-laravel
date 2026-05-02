@@ -15,6 +15,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/profil', fn() => Inertia::render('oprec/profil/page'))->name('profil.index');
     Route::get('/profil/transkrip', [\App\Http\Controllers\ProfileController::class, 'transkrip'])->name('profil.transkrip');
     Route::get('/profil/ktm', [\App\Http\Controllers\ProfileController::class, 'ktm'])->name('profil.ktm');
+    Route::get('/profil/cv', [\App\Http\Controllers\ProfileController::class, 'cv'])->name('profil.cv');
 
     // ── Oprec routes (mahasiswa = role:user) ─────────────────
     Route::prefix('oprec')->name('oprec.')->group(function () {
@@ -59,6 +60,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/seleksi/choices/{choice}/transkrip', [\App\Http\Controllers\ApplicationController::class, 'reviewerChoiceTranscript'])
         ->middleware('role:admin,dosen')
         ->name('seleksi.choice.transkrip');
+    Route::get('/seleksi/choices/{choice}/cv', [\App\Http\Controllers\ApplicationController::class, 'reviewerChoiceCv'])
+        ->middleware('role:admin,dosen')
+        ->name('seleksi.choice.cv');
 
     // ── Database Asisten ─────────────────────────────────────
     Route::prefix('database')->name('database.')->middleware('role:admin,dosen')->group(function () {
