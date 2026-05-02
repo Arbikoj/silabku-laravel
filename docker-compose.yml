@@ -60,6 +60,12 @@ services:
       - ./:/var/www/html:ro
     depends_on:
       - app
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/ || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     networks:
       - silabku_net
 
@@ -74,6 +80,21 @@ services:
     command: sh -c "npm install && npm run dev"
     ports:
       - "5173:5173"
+    networks:
+      - silabku_net
+
+  # ─── Cloudflare Tunnel ─────────────────────────────────────────────────────
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: silabku_cloudflared
+    restart: unless-stopped
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
+      TUNNEL_ID: ${CLOUDFLARE_TUNNEL_ID}
+    depends_on:
+      web:
+        condition: service_healthy
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
     networks:
       - silabku_net
 
