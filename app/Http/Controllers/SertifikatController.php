@@ -332,7 +332,7 @@ class SertifikatController extends Controller
 
         $event = Event::with('semester')->findOrFail($request->integer('event_id'));
         $semesterName = $event->semester ? $event->semester->nama : 'Semester';
-        $eventName = $this->sanitizeDriveName($event->nama);
+        $eventName = $event->nama;
         $nomorAwal = (int) $request->integer('nomor_awal');
         $nomorAkhir = trim((string) $request->input('nomor_akhir'));
 
@@ -379,7 +379,7 @@ class SertifikatController extends Controller
                 $nama = $recipient['nama'];
                 $nomorUrut = $nomorAwal + $index;
                 $nomorSertifikat = $this->formatCertificateNumber($nomorUrut, $nomorAkhir);
-                $mkNama = $this->sanitizeDriveName($recipient['mata_kuliah']);
+                $mkNama = $recipient['mata_kuliah'];
                 $safeNama = $this->sanitizeDriveName($nama);
                 $safeNim = $this->sanitizeDriveName($recipient['nim']);
 
