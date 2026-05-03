@@ -2,6 +2,9 @@
 
 namespace App\Providers;
 
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -19,6 +22,23 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if (app()->bound('request')) {
+            /** @var Request $request */
+            $request = app('request');
+            $forwardedProto = $request->headers->get('x-forwarded-proto');
+
+            if (!empty($forwardedProto)) {
+                $publicRoot = $forwardedProto.'://'.$request->getHost();
+
+                URL::forceRootUrl($publicRoot);
+                URL::forceScheme($forwardedProto);
+            }
+        }
+
+        // Serve Vite assets via relative paths so the app works behind
+        // different hostnames (Cloudflare tunnel, localhost, custom domains).
+        Vite::createAssetPathsUsing(fn (string $path) => '/'.ltrim($path, '/'));
+
         try {
             \Illuminate\Support\Facades\Storage::extend('google', function ($app, $config) {
                 $options = [];
