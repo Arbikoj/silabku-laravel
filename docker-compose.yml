@@ -9,7 +9,7 @@ services:
       POSTGRES_USER: ${DB_USERNAME:-silabku}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-secret}
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql
     ports:
       - "5432:5432"
     networks:
