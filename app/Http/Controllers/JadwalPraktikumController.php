@@ -36,7 +36,7 @@ class JadwalPraktikumController extends Controller
 
         $kelas = \App\Models\Kelas::findOrFail($request->kelas_id);
         
-        // Cek bentrok
+        // Cek bentrok dengan jadwal praktikum lain
         $conflict = JadwalPraktikum::where('laboratorium_id', $request->laboratorium_id)
             ->where('semester_id', $request->semester_id)
             ->where('hari', $request->hari)
@@ -49,6 +49,22 @@ class JadwalPraktikumController extends Controller
             return response()->json([
                 'message' => 'Jadwal bentrok dengan mata kuliah lain di laboratorium ini.',
                 'errors' => ['jam_mulai' => ['Waktu ini sudah ditempati kelas lain.']]
+            ], 422);
+        }
+
+        // Cek bentrok dengan kegiatan insidental yang sudah ada di masa depan
+        $conflictKegiatan = \App\Models\Kegiatan::where('laboratorium_id', $request->laboratorium_id)
+            ->where('hari', $request->hari)
+            ->where('tanggal', '>=', date('Y-m-d'))
+            ->where(function ($query) use ($request) {
+                $query->where('jam_mulai', '<', $request->jam_selesai)
+                      ->where('jam_selesai', '>', $request->jam_mulai);
+            })->first();
+
+        if ($conflictKegiatan) {
+            return response()->json([
+                'message' => "Jadwal bentrok dengan kegiatan yang sudah terdaftar: {$conflictKegiatan->nama_kegiatan} pada tanggal {$conflictKegiatan->tanggal}.",
+                'errors' => ['jam_mulai' => ['Waktu ini bentrok dengan kegiatan yang sudah ada.']]
             ], 422);
         }
 
@@ -75,7 +91,7 @@ class JadwalPraktikumController extends Controller
 
         $kelas = \App\Models\Kelas::findOrFail($request->kelas_id);
         
-        // Cek bentrok
+        // Cek bentrok dengan jadwal praktikum lain
         $conflict = JadwalPraktikum::where('laboratorium_id', $jadwalPraktikum->laboratorium_id)
             ->where('semester_id', $jadwalPraktikum->semester_id)
             ->where('hari', $request->hari)
@@ -89,6 +105,22 @@ class JadwalPraktikumController extends Controller
             return response()->json([
                 'message' => 'Jadwal bentrok dengan mata kuliah lain di laboratorium ini.',
                 'errors' => ['jam_mulai' => ['Waktu ini sudah ditempati kelas lain.']]
+            ], 422);
+        }
+
+        // Cek bentrok dengan kegiatan insidental yang sudah ada di masa depan
+        $conflictKegiatan = \App\Models\Kegiatan::where('laboratorium_id', $jadwalPraktikum->laboratorium_id)
+            ->where('hari', $request->hari)
+            ->where('tanggal', '>=', date('Y-m-d'))
+            ->where(function ($query) use ($request) {
+                $query->where('jam_mulai', '<', $request->jam_selesai)
+                      ->where('jam_selesai', '>', $request->jam_mulai);
+            })->first();
+
+        if ($conflictKegiatan) {
+            return response()->json([
+                'message' => "Jadwal bentrok dengan kegiatan yang sudah terdaftar: {$conflictKegiatan->nama_kegiatan} pada tanggal {$conflictKegiatan->tanggal}.",
+                'errors' => ['jam_mulai' => ['Waktu ini bentrok dengan kegiatan yang sudah ada.']]
             ], 422);
         }
 

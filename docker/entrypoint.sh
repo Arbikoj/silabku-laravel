@@ -23,7 +23,12 @@ echo "==> Database is ready!"
 echo "==> Syncing public assets to shared volume..."
 cp -a /var/www/html/public/. /var/www/html/public-shared/
 
-ARTISAN_STARTUP_COMMAND="${APP_STARTUP_ARTISAN_COMMAND:-migrate --force}"
+if [ "$RUN_SEEDERS_ON_STARTUP" = "true" ] || [ "$RUN_SEEDERS_ON_STARTUP" = "1" ]; then
+    ARTISAN_STARTUP_COMMAND="${APP_STARTUP_ARTISAN_COMMAND:-migrate --seed --force}"
+    echo "==> Option RUN_SEEDERS_ON_STARTUP is enabled."
+else
+    ARTISAN_STARTUP_COMMAND="${APP_STARTUP_ARTISAN_COMMAND:-migrate --force}"
+fi
 
 echo "==> Running Artisan startup command: php artisan ${ARTISAN_STARTUP_COMMAND}"
 php artisan ${ARTISAN_STARTUP_COMMAND}

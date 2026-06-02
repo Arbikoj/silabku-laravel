@@ -33,12 +33,12 @@ services:
     env_file:
       - .env
     environment:
-      APP_ENV: local
-      APP_DEBUG: "true"
+      APP_ENV: ${APP_ENV:-production}
+      APP_DEBUG: ${APP_DEBUG:-false}
       DB_CONNECTION: pgsql
       DB_HOST: db
       DB_PORT: 5432
-      APP_STARTUP_ARTISAN_COMMAND: migrate:fresh --seed --force
+      APP_STARTUP_ARTISAN_COMMAND: ${APP_STARTUP_ARTISAN_COMMAND:-migrate --force}
     volumes:
       - ./:/var/www/html
       - ./docker/entrypoint.sh:/entrypoint.sh
@@ -54,7 +54,7 @@ services:
     container_name: silabku_web
     restart: unless-stopped
     ports:
-      - "80:80"
+      - "${WEB_PORT:-80}:80"
     volumes:
       - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
       - ./:/var/www/html:ro
@@ -62,6 +62,11 @@ services:
       - app
     networks:
       - silabku_net
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/ || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
   # ─── Vite Dev Server ────────────────────────────────────────────────────────
   vite:
@@ -73,7 +78,21 @@ services:
       - ./:/var/www/html
     command: sh -c "npm install && npm run dev"
     ports:
-      - "5173:5173"
+      - "${VITE_PORT:-5173}:5173"
+    networks:
+      - silabku_net
+    profiles: [ "dev" ]
+
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: silabku_cloudflared
+    restart: unless-stopped
+    environment:
+      CLOUDFLARE_TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      web:
+        condition: service_healthy
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
     networks:
       - silabku_net
 

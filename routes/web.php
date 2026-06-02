@@ -41,6 +41,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/jadwal', fn() => Inertia::render('jadwal/page'))
         ->name('jadwal.index');
 
+    Route::get('/kelola-kegiatan', fn() => Inertia::render('manage/kegiatan/page'))
+        ->middleware('role:admin,dosen')
+        ->name('kegiatan.manage');
+
     // ── Laporan BAP (Asisten) ─────────────────────────────────
     Route::prefix('bap')->name('bap.')->group(function () {
         Route::get('/', [\App\Http\Controllers\BapController::class, 'index'])->name('index');

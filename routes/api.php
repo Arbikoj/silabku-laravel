@@ -49,8 +49,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ── Jadwal Praktikum ──────────────────────────────────────
     Route::apiResource('/jadwal-praktikum', \App\Http\Controllers\JadwalPraktikumController::class)->only(['index', 'show']);
+    Route::apiResource('/kegiatan', \App\Http\Controllers\KegiatanController::class)->only(['index', 'show']);
     Route::middleware('role:admin,dosen')->group(function () {
         Route::apiResource('/jadwal-praktikum', \App\Http\Controllers\JadwalPraktikumController::class)->except(['index', 'show']);
+        Route::apiResource('/kegiatan', \App\Http\Controllers\KegiatanController::class)->except(['index', 'show']);
     });
 
     // ── Applications ──────────────────────────────────────────
@@ -93,3 +95,4 @@ Route::middleware('auth:sanctum')->group(function () {
 
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/users', [UserController::class, 'store']);
+Route::get('/kegiatan-public', [\App\Http\Controllers\KegiatanController::class, 'publicIndex']);

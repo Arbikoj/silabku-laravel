@@ -164,11 +164,21 @@ export function AppSidebar() {
         },
     ];
 
+    const kelolaKegiatanItems: DropdownItem[] = [
+        {
+            title: 'Kelola Kegiatan',
+            url: '/kelola-kegiatan',
+            icon: Calendar,
+            isActive: true,
+        },
+    ];
+
     // ── Build full nav ─────────────────────────────────────────
     const dropdownNav: DropdownItem[] = [
         ...baseMenuItems,
         ...((role === 'admin') ? dataItems : []),
         ...((role === 'admin' || role === 'dosen' || role === 'user') ? jadwalItems : []),
+        ...((role === 'admin' || role === 'dosen') ? kelolaKegiatanItems : []),
         ...(role === 'user' ? bapItems : []),
         ...(role === 'user' ? sertifikatMahasiswaItems : []),
         ...(role === 'user' ? oprecItems : []),

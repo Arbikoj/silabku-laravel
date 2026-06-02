@@ -318,8 +318,8 @@ export default function AbsensiAsistenPage() {
                                     </span>
                                 </SelectTrigger>
                                 <SelectContent className="max-w-[340px]">
-                                    {events.map((e) => (
-                                        <SelectItem key={e.id} value={e.id.toString()}>
+                                    {events.filter(e => e.id !== null && e.id !== undefined && String(e.id).trim() !== '').map((e) => (
+                                        <SelectItem key={e.id} value={String(e.id)}>
                                             <span className="block truncate max-w-[300px]" title={e.nama}>
                                                 {e.nama}
                                             </span>
@@ -343,8 +343,8 @@ export default function AbsensiAsistenPage() {
                                     </span>
                                 </SelectTrigger>
                                 <SelectContent className="max-w-[380px]">
-                                    {mataKuliahOptions.map((item) => (
-                                        <SelectItem key={item.id} value={item.id.toString()}>
+                                    {mataKuliahOptions.filter(item => item.id !== null && item.id !== undefined && String(item.id).trim() !== '').map((item) => (
+                                        <SelectItem key={item.id} value={String(item.id)}>
                                             <span className="block truncate max-w-[340px]">{item.nama}</span>
                                         </SelectItem>
                                     ))}
@@ -354,7 +354,7 @@ export default function AbsensiAsistenPage() {
                             <Select
                                 value={kelasId}
                                 onValueChange={(v) => {
-                                    setKelasId(v);
+                                    setKelasId(v === '__all__' ? '' : v);
                                     setPagination((p) => ({ ...p, pageIndex: 0 }));
                                 }}
                                 disabled={!eventId || !mataKuliahId || kelasOptions.length === 0}
@@ -366,9 +366,9 @@ export default function AbsensiAsistenPage() {
                                     </span>
                                 </SelectTrigger>
                                 <SelectContent className="max-w-[260px]">
-                                    <SelectItem value="">Semua Kelas</SelectItem>
-                                    {kelasOptions.map((item) => (
-                                        <SelectItem key={item.id} value={item.id.toString()}>
+                                    <SelectItem value="__all__">Semua Kelas</SelectItem>
+                                    {kelasOptions.filter(item => item.id !== null && item.id !== undefined && String(item.id).trim() !== '').map((item) => (
+                                        <SelectItem key={item.id} value={String(item.id)}>
                                             <span className="block truncate max-w-[220px]">{item.nama}</span>
                                         </SelectItem>
                                     ))}

@@ -32,6 +32,7 @@ interface ScheduleEntry {
     mata_kuliah: MataKuliah;
     kelas: Kelas;
     keterangan?: string;
+    laboratorium_id?: number;
 }
 
 const DEFAULT_FORM = {
