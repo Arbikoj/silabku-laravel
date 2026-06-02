@@ -24,6 +24,7 @@ interface AuthProfile {
     nilai_ipk?: number | null;
     transkrip_gd_id?: string | null;
     ktm_gd_id?: string | null;
+    cv_gd_id?: string | null;
 }
 
 interface AuthUser {
@@ -51,6 +52,8 @@ export default function AssistantProfilePage() {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [ktmFile, setKtmFile] = useState<File | null>(null);
     const ktmInputRef = useRef<HTMLInputElement>(null);
+    const [cvFile, setCvFile] = useState<File | null>(null);
+    const cvInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         if (auth.user?.profile) {
@@ -97,6 +100,9 @@ export default function AssistantProfilePage() {
             if (ktmFile) {
                 formData.append('ktm', ktmFile);
             }
+            if (cvFile) {
+                formData.append('cv', cvFile);
+            }
 
             await api.post('/profile', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' },
@@ -110,6 +116,8 @@ export default function AssistantProfilePage() {
             if (fileInputRef.current) fileInputRef.current.value = '';
             setKtmFile(null);
             if (ktmInputRef.current) ktmInputRef.current.value = '';
+            setCvFile(null);
+            if (cvInputRef.current) cvInputRef.current.value = '';
         } catch {
             toast.error('Gagal menyimpan profil');
         } finally {
@@ -287,6 +295,32 @@ export default function AssistantProfilePage() {
                                                 title="Kartu Tanda Mahasiswa"
                                                 src="/profil/ktm"
                                                 fileType={profile?.ktm_gd_id?.match(/\.(jpeg|jpg|gif|png)$/i) ? 'image' : 'pdf'}
+                                                trigger={
+                                                    <Button type="button" variant="outline" className="shrink-0 gap-2">
+                                                        Lihat <ExternalLink className="h-4 w-4" />
+                                                    </Button>
+                                                }
+                                            />
+                                        )}
+                                    </div>
+                                    <p className="text-muted-foreground mt-1 text-[10px] text-red-500 italic">
+                                        * Wajib diunggah (Maks 5MB)
+                                    </p>
+                                </div>
+                                <div className="grid gap-1 mt-2">
+                                    <Label>Curriculum Vitae (PDF)</Label>
+                                    <div className="flex items-center gap-2">
+                                        <Input
+                                            type="file"
+                                            accept="application/pdf"
+                                            ref={cvInputRef}
+                                            onChange={(e) => setCvFile(e.target.files?.[0] || null)}
+                                            className="cursor-pointer"
+                                        />
+                                        {profile?.cv_gd_id && !cvFile && (
+                                            <DocumentViewerDialog
+                                                title="Curriculum Vitae"
+                                                src="/profil/cv"
                                                 trigger={
                                                     <Button type="button" variant="outline" className="shrink-0 gap-2">
                                                         Lihat <ExternalLink className="h-4 w-4" />

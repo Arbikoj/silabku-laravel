@@ -16,6 +16,7 @@ class Profile extends Model
         'foto',
         'transkrip_gd_id',
         'ktm_gd_id',
+        'cv_gd_id',
         'nilai_ipk',
     ];
 

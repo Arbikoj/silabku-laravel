@@ -9,11 +9,10 @@ import { Head } from '@inertiajs/react';
 import { motion } from 'framer-motion';
 import { Award, Bold, Download, Eye, FileBadge2, Italic, Loader2, Move, Save, Underline, Upload, WandSparkles } from 'lucide-react';
 import * as pdfjsLib from 'pdfjs-dist';
-import pdfWorker from 'pdfjs-dist/build/pdf.worker.mjs?url';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Sertifikat', href: '#' },

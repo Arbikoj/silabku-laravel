@@ -67,8 +67,6 @@ class RecruitmentSeeder extends Seeder
         );
 
         $semesterData = [
-            ['nama' => 'Gasal 2024/2025', 'tipe' => 'gasal', 'tahun' => 2024, 'is_active' => false],
-            ['nama' => 'Genap 2024/2025', 'tipe' => 'genap', 'tahun' => 2024, 'is_active' => false],
             ['nama' => 'Gasal 2025/2026', 'tipe' => 'gasal', 'tahun' => 2025, 'is_active' => false],
             ['nama' => 'Genap 2025/2026', 'tipe' => 'genap', 'tahun' => 2025, 'is_active' => false],
             ['nama' => 'Gasal 2026/2027', 'tipe' => 'gasal', 'tahun' => 2026, 'is_active' => true],

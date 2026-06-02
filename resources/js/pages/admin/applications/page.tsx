@@ -54,6 +54,7 @@ interface Candidate {
     nilai_mata_kuliah?: string;
     has_sptjm?: boolean;
     has_transkrip?: boolean;
+    has_cv?: boolean;
     other_choices: OtherChoice[];
 }
 
@@ -318,6 +319,17 @@ export default function ApplicationSelectionPage() {
                                                                             trigger={
                                                                                 <Button size="sm" variant="outline" className="h-8">
                                                                                     <GraduationCap className="h-3.5 w-3.5" /> Lihat Transkrip
+                                                                                </Button>
+                                                                            }
+                                                                        />
+                                                                    )}
+                                                                    {candidate.has_cv && (
+                                                                        <DocumentViewerDialog
+                                                                            title={`Curriculum Vitae - ${candidate.nama_asisten}`}
+                                                                            src={`/seleksi/choices/${candidate.choice_id}/cv`}
+                                                                            trigger={
+                                                                                <Button size="sm" variant="outline" className="h-8">
+                                                                                    <FileText className="h-3.5 w-3.5" /> Lihat CV
                                                                                 </Button>
                                                                             }
                                                                         />
