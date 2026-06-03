@@ -23,6 +23,12 @@ echo "==> Database is ready!"
 echo "==> Syncing public assets to shared volume..."
 cp -a /var/www/html/public/. /var/www/html/public-shared/
 
+
+if [ ! -f "/var/www/html/vendor/autoload.php" ]; then
+    echo "==> vendor/autoload.php not found. Running composer install..."
+    composer install --no-interaction --optimize-autoloader
+fi
+
 if [ "$RUN_SEEDERS_ON_STARTUP" = "true" ] || [ "$RUN_SEEDERS_ON_STARTUP" = "1" ]; then
     ARTISAN_STARTUP_COMMAND="${APP_STARTUP_ARTISAN_COMMAND:-migrate --seed --force}"
     echo "==> Option RUN_SEEDERS_ON_STARTUP is enabled."
